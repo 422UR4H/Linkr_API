@@ -39,3 +39,41 @@ export function getUsersCountDB() {
         `SELECT COUNT(id) AS "usersAmount" FROM users`,
     );
 }
+
+export async  function getAllInfoFromUserId(userId) {
+    try {
+        const query = `
+            SELECT
+            json_build_object(
+                'user_id', u.id,
+                'user_name', u.user_name,
+                'photo', u.photo,
+                'user_posts', COALESCE(json_agg(
+                    json_build_object(
+                        'post_id', p.id,
+                        'link', p.link,
+                        'description', p.description,
+                        'hash_tags', p.hash_tags,
+                        'likes_count', p.likes_count,
+                        'created_at', p.created_at
+                    )
+                ), '[]'::json)
+            ) AS user_object
+        FROM
+            users u
+        LEFT JOIN
+            posts p ON u.id = p.owner_id
+        WHERE
+            u.id = $1
+        GROUP BY
+            u.id, u.user_name, u.photo;    
+    `;
+
+        const user = await clientDB.query(query,[userId]);
+        
+        return user.rows[0];
+        
+    } catch (error) {
+        return null;
+    }
+}
