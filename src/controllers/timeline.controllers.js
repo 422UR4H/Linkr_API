@@ -4,7 +4,7 @@ import { clientDB } from "../database/db.connection.js";
 export async function getPosts(req, res) {
   try {
     const getPosts = await clientDB.query(
-      `SELECT p.*, l.likes_count
+      `SELECT p.*, l.likes_count, u.user_name AS user_name, u.photo AS user_photo
       FROM posts p
       LEFT JOIN (
           SELECT posts.id AS post_id, COUNT(l.id) AS likes_count
@@ -12,7 +12,8 @@ export async function getPosts(req, res) {
           LEFT JOIN likes l ON posts.id = l.liked_post_id
           GROUP BY posts.id
       ) AS l ON p.id = l.post_id
-      ORDER BY p.id DESC;
+      LEFT JOIN users u ON p.owner_id = u.id
+      ORDER BY p.id DESC;          
       `
     );
 
