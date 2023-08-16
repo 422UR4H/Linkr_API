@@ -1,5 +1,6 @@
 import urlMetadata from "url-metadata";
 import { clientDB } from "../database/db.connection.js";
+import { userHasLikedPost } from "../repositories/user.repository.js";
 
 export async function getPosts(req, res) {
   try {
@@ -22,8 +23,9 @@ export async function getPosts(req, res) {
       try {
           const metadata = await urlMetadata(post.link);
           post.metadata = {description: metadata.description, title: metadata['og:title'],image: metadata['og:image']};
+          post.default_liked = await userHasLikedPost(post.id,res.locals.user.id);
       } catch (err) {
-          console.log(err);
+          console.log(err.message);
       }
     }
 

@@ -95,3 +95,14 @@ export async function getUsersFilterName(name) {
         return null;
     }
 }
+
+export async function userHasLikedPost(postId,userId) {
+    try {
+        const query = 'SELECT * FROM likes WHERE like_owner_id = $1 AND liked_post_id = $2';
+        const result = await clientDB.query(query, [userId,postId]);
+        return result.rows.length > 0;
+    } catch (error) {
+        console.log(error.message);
+        return false;
+    }
+}
