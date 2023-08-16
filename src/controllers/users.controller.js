@@ -1,12 +1,21 @@
+import urlMetadata from "url-metadata";
 import { getAllInfoFromUserId, getUsersFilterName } from "../repositories/user.repository.js";
 
 export async function getUserInfo(req, res) {
     const { id } = req.params;
-
     try {
         const user = await getAllInfoFromUserId(id);
         if (user == null) {
              return res.status(404).send(`No users found with id ${id}`);
+        }
+
+        for (const post of user.user_posts) {
+            try {
+                const metadata = await urlMetadata(post.link);
+                post.metadata = {description: metadata.description, title: metadata['og:title'],image: metadata['og:image']};
+            } catch (err) {
+                console.log(err);
+            }
         }
 
         return res.status(200).send(user);
