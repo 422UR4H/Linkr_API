@@ -39,7 +39,8 @@ export async function signIn(req, res) {
             process.env.JWT_SECRET || "test",
             { expiresIn: 24 * 60 * 60 }
         );
-        res.send({ token });
+        delete user.password;
+        res.send({ token, user });
     } catch ({ message }) {
         res.status(500).send({ message });
     }
