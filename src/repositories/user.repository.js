@@ -73,7 +73,6 @@ export async function getAllInfoFromUserId(userId) {
 
         const user = await clientDB.query(query, [userId]);
         if (user.rows[0].user_object.user_posts.length == 1 && user.rows[0].user_object.user_posts[0].post_id == null) {
-
             user.rows[0].user_object.user_posts = [];
         }
 
