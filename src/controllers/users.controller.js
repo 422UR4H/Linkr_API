@@ -1,5 +1,5 @@
 import urlMetadata from "url-metadata";
-import { getAllInfoFromUserId, getUsersFilterName } from "../repositories/user.repository.js";
+import { getAllInfoFromUserId, getUsersFilterName, userHasLikedPost } from "../repositories/user.repository.js";
 
 export async function getUserInfo(req, res) {
     const { id } = req.params;
@@ -13,6 +13,7 @@ export async function getUserInfo(req, res) {
             try {
                 const metadata = await urlMetadata(post.link);
                 post.metadata = {description: metadata.description, title: metadata['og:title'],image: metadata['og:image']};
+                post.default_liked = await userHasLikedPost(post.id,res.locals.user.id);
             } catch (err) {
                 console.log(err);
             }
