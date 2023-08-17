@@ -24,7 +24,7 @@ export async function getPosts(req, res) {
           const metadata = await urlMetadata(post.link);
           post.metadata = {description: metadata.description, title: metadata['og:title'],image: metadata['og:image']};
           post.default_liked = await userHasLikedPost(post.id,res.locals.user.id);
-          const names = await getFirstLikeNamesFromPost(post.post_id);
+          const names = await getFirstLikeNamesFromPost(post.id);
           post.first_liker_name = names.first_liker_name;
           post.second_liker_name = names.second_liker_name;
       } catch (err) {
