@@ -34,3 +34,19 @@ export async function getPosts(req, res) {
     console.log(err);
   }
 }
+
+export async function postLike(req, res) {
+  const { id } = req.params;
+  const { like_owner_id } = req.body;
+
+  try {
+    await clientDB.query(
+      `INSERT INTO likes (liked_post_id, like_owner_id) VALUES ($1, $2) `,
+      [id, like_owner_id]
+    );
+    res.sendStatus(200);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Erro ao adicionar o like");
+  }
+}
