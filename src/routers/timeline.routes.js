@@ -5,6 +5,8 @@ import validateAuth from "../middlewares/validateAuth.js";
 
 const timelineRoutes = Router();
 
+timelineRoutes.get("/timeline", getPosts);
+timelineRoutes.get("/timeline", getTrendingHashtags);
 timelineRoutes.post("/like/:id",validateAuth,postLike);
 timelineRoutes.delete("/dislike/:id",validateAuth,deleteLike);
 timelineRoutes.get("/timeline",validateAuth, getPosts);
