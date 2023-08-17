@@ -1,10 +1,11 @@
 import urlMetadata from "url-metadata";
 import { clientDB } from "../database/db.connection.js";
+import { userHasLikedPost } from "../repositories/user.repository.js";
 
 export async function getPosts(req, res) {
   try {
     const getPosts = await clientDB.query(
-      `SELECT p.*, l.likes_count
+      `SELECT p.*, l.likes_count, u.user_name AS user_name, u.photo AS user_photo
       FROM posts p
       LEFT JOIN (
           SELECT posts.id AS post_id, COUNT(l.id) AS likes_count
@@ -12,21 +13,19 @@ export async function getPosts(req, res) {
           LEFT JOIN likes l ON posts.id = l.liked_post_id
           GROUP BY posts.id
       ) AS l ON p.id = l.post_id
-      ORDER BY p.id DESC;
+      LEFT JOIN users u ON p.owner_id = u.id
+      ORDER BY p.id DESC;          
       `
     );
 
     const posts = getPosts.rows;
     for (const post of posts) {
       try {
-        const metadata = await urlMetadata(post.link);
-        post.metadata = {
-          description: metadata.description,
-          title: metadata["og:title"],
-          image: metadata["og:image"],
-        };
+          const metadata = await urlMetadata(post.link);
+          post.metadata = {description: metadata.description, title: metadata['og:title'],image: metadata['og:image']};
+          post.default_liked = await userHasLikedPost(post.id,res.locals.user.id);
       } catch (err) {
-        console.log(err);
+          console.log(err.message);
       }
     }
 
