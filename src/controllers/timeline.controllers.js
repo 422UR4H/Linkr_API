@@ -51,3 +51,19 @@ export async function postLike(req, res) {
     res.status(500).send("Erro ao adicionar o like");
   }
 }
+
+export async function deleteLike(req, res) {
+  const { post_id } = req.params;
+  const { like_owner_id } = req.body;
+
+  try {
+    await clientDB.query(
+      `DELETE FROM likes WHERE liked_post_id = $1 AND like_owner_id = $2`,
+      [post_id, like_owner_id]
+    );
+    res.sendStatus(200);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Erro ao retirar o like");
+  }
+}
