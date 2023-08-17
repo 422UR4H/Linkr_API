@@ -76,6 +76,9 @@ export async function getAllInfoFromUserId(userId) {
             user.rows[0].user_object.user_posts = [];
         }
 
+        // first_liker_name={post.first_liker_name}
+        // second_liker_name={post.second_liker_name}
+
         return user.rows[0].user_object;
 
     } catch (error) {
@@ -83,6 +86,34 @@ export async function getAllInfoFromUserId(userId) {
         return null;
     }
 }
+
+export async function getFirstLikeNamesFromPost(postId) {
+    try {
+        const query = `
+        SELECT
+            users.user_name
+        FROM
+            likes
+        JOIN
+            users ON likes.like_owner_id = users.id
+        WHERE
+            likes.liked_post_id = $1
+        LIMIT 2;
+        `;
+
+        const names = await clientDB.query(query, [postId]);
+        return {
+            first_liker_name: names.rows[0] ? names.rows[0].user_name : "" ,
+            second_liker_name: names.rows[1] ? names.rows[1].user_name : ""
+        };
+
+    } catch (error) {
+        console.log(error.message);
+        return null;
+    }
+}
+
+
 
 export async function getUsersFilterName(name) {
     try {
