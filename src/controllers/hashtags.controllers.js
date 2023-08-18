@@ -2,7 +2,7 @@ import { getPostsByHashtagDB } from "../repositories/hashtags.repository.js"
 import { clientDB } from "../database/db.connection.js"
 import { getFirstLikeNamesFromPost, userHasLikedPost } from "../repositories/user.repository.js";
 import { getPostsDB } from "../repositories/post.repository.js";
-import urlMetadata from "url-metadata";
+import urlMetadata from "../Utils/urlMetadata.js";
 
 export async function getPostsByHashtag(req, res) {
 
@@ -15,8 +15,13 @@ export async function getPostsByHashtag(req, res) {
         const posts = tredingPosts.rows;
         for (const post of posts) {
           try {
-              const metadata = await urlMetadata(post.link);
-              post.metadata = {description: metadata.description, title: metadata['og:title'],image: metadata['og:image']};
+            const metadata = (await urlMetadata(post.link)).data;
+            post.metadata = 
+            {
+                description: metadata.description ? metadata.description : "", 
+                title: metadata.title ? metadata.title : "",
+                image: metadata.images &&  metadata.images[0] ? metadata.images[0] : ""
+            };
               post.default_liked = await userHasLikedPost(post.id,res.locals.user.id);
               const names = await getFirstLikeNamesFromPost(post.id);
               post.first_liker_name = names.first_liker_name;
