@@ -118,8 +118,8 @@ export async function getFirstLikeNamesFromPost(postId) {
 export async function getUsersFilterName(name) {
     try {
         const query = `SELECT id, user_name, photo FROM users
-        WHERE user_name LIKE $1`;
-        const result = await clientDB.query(query, [`%${name.toLowerCase()}%`]);
+        WHERE user_name ILIKE $1`;
+        const result = await clientDB.query(query, [`%${name.trim()}%`]);
         return result.rows;
     } catch (error) {
         console.log(error.message);
