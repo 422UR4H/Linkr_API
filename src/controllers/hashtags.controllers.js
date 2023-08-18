@@ -1,5 +1,5 @@
 import { getPostsByHashtagDB } from "../repositories/hashtags.repository.js"
-import {getAllPostsDB} from "../repositories/hashtags.repository.js"
+//import {getAllPostsDB} from "../repositories/hashtags.repository.js"
 export async function getPostsByHashtag(req, res) {
 
     const {hashtag} = req.params
