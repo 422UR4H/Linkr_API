@@ -11,7 +11,7 @@ export async function getPostsByHashtagDB(hashtag) {
     GROUP BY posts.id
     ) AS l ON p.id = l.post_id
     LEFT JOIN users u ON p.owner_id = u.id
-    WHERE p.hash_tags LIKE $1
+    WHERE p.hash_tags ILIKE $1
     ORDER BY p.id DESC;
-    `, [`%${hashtag.toLowerCase()}%`])
+    `, [`%${hashtag.trim()}%`])
     }
