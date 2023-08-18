@@ -1,4 +1,4 @@
-import urlMetadata from "url-metadata";
+import urlMetadata from "../Utils/urlMetadata.js";
 import { getAllInfoFromUserId, getFirstLikeNamesFromPost, getUsersFilterName, userHasLikedPost } from "../repositories/user.repository.js";
 
 export async function getUserInfo(req, res) {
@@ -11,8 +11,13 @@ export async function getUserInfo(req, res) {
 
         for (const post of user.user_posts) {
             try {
-                const metadata = await urlMetadata(post.link);
-                post.metadata = {description: metadata.description, title: metadata['og:title'],image: metadata['og:image']};
+                const metadata = (await urlMetadata(post.link)).data;
+                post.metadata = 
+                {
+                    description: metadata.description ? metadata.description : "", 
+                    title: metadata.title ? metadata.title : "",
+                    image: metadata.images &&  metadata.images[0] ? metadata.images[0] : ""
+                };
                 post.default_liked = await userHasLikedPost(post.post_id,res.locals.user.id);
                 const names = await getFirstLikeNamesFromPost(post.post_id);
                 post.first_liker_name = names.first_liker_name;
