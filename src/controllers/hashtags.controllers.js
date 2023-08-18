@@ -1,13 +1,37 @@
 import { getPostsByHashtagDB } from "../repositories/hashtags.repository.js"
-//import {getAllPostsDB} from "../repositories/hashtags.repository.js"
+import { clientDB } from "../database/db.connection.js"
+import { getFirstLikeNamesFromPost, userHasLikedPost } from "../repositories/user.repository.js";
+import { getPostsDB } from "../repositories/post.repository.js";
+import urlMetadata from "../Utils/urlMetadata.js";
+
 export async function getPostsByHashtag(req, res) {
 
     const {hashtag} = req.params
 
     try {
+
         const tredingPosts = await getPostsByHashtagDB(hashtag)
 
-        return res.send(tredingPosts.rows)
+        const posts = tredingPosts.rows;
+        for (const post of posts) {
+          try {
+            const metadata = (await urlMetadata(post.link)).data;
+            post.metadata = 
+            {
+                description: metadata.description ? metadata.description : "", 
+                title: metadata.title ? metadata.title : "",
+                image: metadata.images &&  metadata.images[0] ? metadata.images[0] : ""
+            };
+              post.default_liked = await userHasLikedPost(post.id,res.locals.user.id);
+              const names = await getFirstLikeNamesFromPost(post.id);
+              post.first_liker_name = names.first_liker_name;
+              post.second_liker_name = names.second_liker_name;
+          } catch (err) {
+              console.log(err.message);
+          }
+        }
+
+        return res.send(posts)
         
     } catch (error) {
         console.log(error.message)
@@ -21,8 +45,9 @@ export async function getTrendingHashtags(req, res) {
         let cleanHashtags = []
         let allHashtagsArray = []
         let allHashtagsStrings = ''
-        const allPosts = await getAllPostsDB()
-
+        const allPosts = await getPostsDB()
+          
+            
         allPosts.rows.forEach(post => {
             const hashtagString = post.hash_tags
             if (hashtagString) {
@@ -41,6 +66,7 @@ export async function getTrendingHashtags(req, res) {
         })
 
         return res.send(cleanHashtags)
+
     } catch (error) {
         console.log(error.message)
         res.sendStatus(500)
