@@ -1,40 +1,38 @@
-import  urlMetadata  from "../Utils/urlMetadata.js";
+import urlMetadata from "../Utils/urlMetadata.js";
 import { clientDB } from "../database/db.connection.js";
-import { getFirstLikeNamesFromPost, userHasLikedPost } from "../repositories/user.repository.js";
+import {
+  deleteLikeDB,
+  getPostsDB,
+  postLikeDB,
+} from "../repositories/timeline.repository.js";
+import {
+  getFirstLikeNamesFromPost,
+  userHasLikedPost,
+} from "../repositories/user.repository.js";
 
 export async function getPosts(req, res) {
   try {
-    const getPosts = await clientDB.query(
-      `SELECT p.*, l.likes_count, u.user_name AS user_name, u.photo AS user_photo
-      FROM posts p
-      LEFT JOIN (
-          SELECT posts.id AS post_id, COUNT(l.id) AS likes_count
-          FROM posts 
-          LEFT JOIN likes l ON posts.id = l.liked_post_id
-          GROUP BY posts.id
-      ) AS l ON p.id = l.post_id
-      LEFT JOIN users u ON p.owner_id = u.id
-      ORDER BY p.id DESC;          
-      `
-    );
-
+    const getPosts = await getPostsDB();
     const posts = getPosts.rows;
     for (const post of posts) {
       try {
         const metadata = (await urlMetadata(post.link)).data;
-        post.metadata = 
-        {
-            description: metadata.description ? metadata.description : "", 
-            title: metadata.title ? metadata.title : "",
-            image: metadata.images &&  metadata.images[0] ? metadata.images[0] : ""
+        post.metadata = {
+          description: metadata.description ? metadata.description : "",
+          title: metadata.title ? metadata.title : "",
+          image:
+            metadata.images && metadata.images[0] ? metadata.images[0] : "",
         };
 
-          post.default_liked = await userHasLikedPost(post.id,res.locals.user.id);
-          const names = await getFirstLikeNamesFromPost(post.id);
-          post.first_liker_name = names.first_liker_name;
-          post.second_liker_name = names.second_liker_name;
+        post.default_liked = await userHasLikedPost(
+          post.id,
+          res.locals.user.id
+        );
+        const names = await getFirstLikeNamesFromPost(post.id);
+        post.first_liker_name = names.first_liker_name;
+        post.second_liker_name = names.second_liker_name;
       } catch (err) {
-          console.log(err.message);
+        console.log(err.message);
       }
     }
 
@@ -49,10 +47,7 @@ export async function postLike(req, res) {
   const { like_owner_id } = req.body;
 
   try {
-    await clientDB.query(
-      `INSERT INTO likes (liked_post_id, like_owner_id) VALUES ($1, $2) `,
-      [id, like_owner_id]
-    );
+    await postLikeDB(id, like_owner_id);
     res.sendStatus(200);
   } catch (err) {
     console.log(err);
@@ -62,11 +57,9 @@ export async function postLike(req, res) {
 
 export async function deleteLike(req, res) {
   const { id } = req.params;
+  const userId = res.locals.user.id;
   try {
-    await clientDB.query(
-      `DELETE FROM likes WHERE liked_post_id = $1 AND like_owner_id = $2`,
-      [id, res.locals.user.id]
-    );
+    await deleteLikeDB(id, userId);
     res.sendStatus(200);
   } catch (err) {
     console.log(err);
