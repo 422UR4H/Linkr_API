@@ -1,11 +1,14 @@
-import  {clientDB}  from "../database/db.connection.js"
-
+import { getPostsByHashtagDB } from "../repositories/hashtags.repository.js"
+import {getAllPostsDB} from "../repositories/hashtags.repository.js"
 export async function getPostsByHashtag(req, res) {
 
-
+    const {hashtag} = req.params
 
     try {
-        const getTrendings = await clientDB.query(`SELECT * FROM posts WHERE hash_tags=$1;`[hash_tags])
+        const tredingPosts = await getPostsByHashtagDB(hashtag)
+
+        return res.send(tredingPosts.rows)
+        
     } catch (error) {
         console.log(error.message)
         res.sendStatus(500)
@@ -18,7 +21,7 @@ export async function getTrendingHashtags(req, res) {
         let cleanHashtags = []
         let allHashtagsArray = []
         let allHashtagsStrings = ''
-        const allPosts = await clientDB.query(`SELECT * FROM posts;`)
+        const allPosts = await getAllPostsDB()
 
         allPosts.rows.forEach(post => {
             const hashtagString = post.hash_tags
