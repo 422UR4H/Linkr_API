@@ -28,3 +28,7 @@ export async function editPost(description, hash_tags, id) {
 export async function deletePost(id) {
     await clientDB.query(`DELETE FROM posts WHERE id = $1`, [id]);
 }
+
+export async function getAllPostsDB(){
+    await clientDB.query(`SELECT * FROM posts;`)
+}
