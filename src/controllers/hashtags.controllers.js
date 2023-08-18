@@ -58,7 +58,8 @@ export async function getTrendingHashtags(req, res) {
         allHashtagsArray = allHashtagsStrings.split(',').map(h => h.trim())
 
         const sortedHashtags = sortByFrequency(allHashtagsArray)
-        sortedHashtags.forEach( hash => {
+        const top10Hashtags = sortedHashtags.slice(0, 10);
+        top10Hashtags.forEach( hash => {
             if(hash !== ""){
                 cleanHashtags.push(hash.replace('#' , ""))
             }
