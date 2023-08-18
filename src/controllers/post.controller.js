@@ -32,11 +32,11 @@ export async function publishPost(req,res) {
   }
 
   export async function removePost(req,res) {
-    const { id } = req.body;
+    const id  = req.params.id;
     const user = res.locals.user;
     const post = await getPostsById(id);
 
-    if(post.owner_id != user.id) {
+      if(post.owner_id != user.id) {
         return res.status(401).send("Post não foi deletado");
     }
 
