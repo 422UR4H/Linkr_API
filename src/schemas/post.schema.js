@@ -8,7 +8,6 @@ export const postSchema = joi.object({
 
 export const editPostSchema = joi.object({
     id: joi.string().required(),
-    link: joi.string().uri().required(),
     description: joi.string(),
     hash_tags: joi.string()
 });
