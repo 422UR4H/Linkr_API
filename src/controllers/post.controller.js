@@ -13,7 +13,8 @@ export async function publishPost(req,res) {
   }
 
   export async function updatePost(req,res) {
-    const { id, description, hash_tags } = req.body;
+    const { id } = req.params;
+    const { description, hash_tags } = req.body;
     const user = res.locals.user;
     const post = await getPostsById(id);
     if(post.owner_id != user.id) {
