@@ -1,7 +1,6 @@
 import { getPostsByHashtagDB } from "../repositories/hashtags.repository.js"
-import { clientDB } from "../database/db.connection.js"
+import { getPostsDB } from "../repositories/timeline.repository.js";
 import { getFirstLikeNamesFromPost, userHasLikedPost } from "../repositories/user.repository.js";
-import { getPostsDB } from "../repositories/post.repository.js";
 import urlMetadata from "../Utils/urlMetadata.js";
 
 export async function getPostsByHashtag(req, res) {
