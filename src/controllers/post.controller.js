@@ -16,9 +16,6 @@ export async function publishPost(req,res) {
     const { id, description, hash_tags } = req.body;
     const user = res.locals.user;
     const post = await getPostsById(id);
-
-    console.log(req.body);
-
     if(post.owner_id != user.id) {
         return res.status(401).send("Post não foi deletado");
     }
