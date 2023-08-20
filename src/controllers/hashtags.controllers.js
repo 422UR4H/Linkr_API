@@ -1,4 +1,4 @@
-import { getPostsByHashtagDB } from "../repositories/hashtags.repository.js"
+import { getPostsByHashtagDB, getPostsByHashtagDBRefactored } from "../repositories/hashtags.repository.js"
 import { getPostsDB } from "../repositories/timeline.repository.js";
 import { getFirstLikeNamesFromPost, userHasLikedPost } from "../repositories/user.repository.js";
 import urlMetadata from "../Utils/urlMetadata.js";
@@ -35,6 +35,19 @@ export async function getPostsByHashtag(req, res) {
     } catch (error) {
         console.log(error.message)
         res.sendStatus(500)
+    }
+}
+
+export async function getPostsByHashtagRefactored(req, res) {
+    const {hashtag} = req.params;
+
+    try {
+        const tredingPosts = await getPostsByHashtagDBRefactored(hashtag,res.locals.user.id);
+        return res.send(tredingPosts.rows);
+        
+    } catch (error) {
+        console.log(error.message)
+        return res.sendStatus(500)
     }
 }
 
