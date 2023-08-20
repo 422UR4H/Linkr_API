@@ -53,7 +53,8 @@ export function getPostsDBRefactored(userId) {
             ORDER BY id ASC
             LIMIT 1 OFFSET 1
         )
-        ORDER BY posts.id DESC;        
+        ORDER BY posts.id DESC
+        LIMIT 20;        
         `
   ,[userId]);
 }

@@ -96,6 +96,8 @@ export async function getAllInfoFromUserIdRefactored(pageUserId,userInThePageId)
         if (user.rows[0].user_object.user_posts.length == 1 && user.rows[0].user_object.user_posts[0].post_id == null) {
             user.rows[0].user_object.user_posts = [];
         }
+
+        user.rows[0].user_object.user_posts = user.rows[0].user_object.user_posts.slice(0,19);
         return user.rows[0].user_object;
 
     } catch (error) {
