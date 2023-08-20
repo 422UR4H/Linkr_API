@@ -3,12 +3,23 @@ import { clientDB } from "../database/db.connection.js";
 import {
   deleteLikeDB,
   getPostsDB,
+  getPostsDBRefactored,
   postLikeDB,
 } from "../repositories/timeline.repository.js";
 import {
   getFirstLikeNamesFromPost,
   userHasLikedPost,
 } from "../repositories/user.repository.js";
+
+export async function getTimelinePostsRefactored(req, res) {
+  try {
+    const getPosts = await getPostsDBRefactored(res.locals.user.id);
+    return res.status(200).send(getPosts.rows);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send("Internal server error getting timeline posts")
+  }
+}
 
 export async function getPosts(req, res) {
   try {
