@@ -8,3 +8,5 @@ usersRouter.get("/users/id/:id", validateAuth, getUserPageInfoRefactored);
 usersRouter.get("/users/name/:name", validateAuth, getUsersWithName);
 
 export default usersRouter;
+
+// test protection rule
