@@ -1,4 +1,5 @@
-import { deleteLikeDB, postLikeDB } from "../repositories/timeline.repository.js";
+import { postLikeDB, deleteLikeDB } from "../repositories/timeline.repository.js";
+
 
 export async function postLike(req, res) {
   const { id } = req.params;

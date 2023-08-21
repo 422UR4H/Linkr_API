@@ -1,5 +1,12 @@
 import urlMetadata from "../Utils/urlMetadata.js";
-import { getAllInfoFromUserId, getFirstLikeNamesFromPost, getUsersFilterName, userHasLikedPost } from "../repositories/user.repository.js";
+import {
+    getAllInfoFromUserId,
+    getAllInfoFromUserIdRefactored,
+    getFirstLikeNamesFromPost,
+    getUsersFilterName,
+    userHasLikedPost
+} from "../repositories/user.repository.js";
+
 
 export async function getUserInfo(req, res) {
     const { id } = req.params;
@@ -30,6 +37,20 @@ export async function getUserInfo(req, res) {
     } catch ({ message }) {
         console.log(message);
         res.status(500).send({ message });
+    }
+}
+
+export async function getUserPageInfoRefactored(req, res) {
+    const { id } = req.params; // This is the user id that is in the url
+    try {
+        const user = await getAllInfoFromUserIdRefactored(id, res.locals.user.id);
+        if (user == null) {
+            return res.status(404).send(`No users found with id ${id}`);
+        }
+        return res.status(200).send(user);
+    } catch ({ message }) {
+        console.log(message);
+        return res.status(500).send({ message });
     }
 }
 
