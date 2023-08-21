@@ -24,19 +24,19 @@ export async function getTrendingHashtags(req, res) {
 
         allPosts.rows.forEach(post => {
             const hashtagString = post.hash_tags;
-            if (hashtagString) {
+            if (hashtagString && hashtagString !== '') {
                 allHashtagsStrings += hashtagString + ",";
             }
         });
+
         allHashtagsArray = allHashtagsStrings.split(',').map(h => h.trim());
-
-        const sortedHashtags = sortByFrequency(allHashtagsArray);
-        const top10Hashtags = sortedHashtags.slice(0, 10);
-
-        top10Hashtags.forEach(hash => {
-            if (hash !== "") cleanHashtags.push(hash.replace('#', ""));
+        allHashtagsArray.forEach(hash => {
+            if ( hash && hash !== "" && hash !== ''){
+                cleanHashtags.push(hash.replace('#', ""));
+            }
         });
-        res.send(cleanHashtags);
+        const sortedHashtags = sortByFrequency(cleanHashtags);
+        res.send(sortedHashtags.slice(0, 10));
     } catch (error) {
         console.log(error.message);
         res.sendStatus(500);

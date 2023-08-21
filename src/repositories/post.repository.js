@@ -120,7 +120,7 @@ export async function getPostsByHashtagDBRefactored(hashtag, userId) {
         ORDER BY id ASC
         LIMIT 1 OFFSET 1
     )
-    WHERE p.hash_tags ILIKE $1
+    WHERE p.hash_tags LIKE $1
     ORDER BY p.id DESC
     LIMIT 20;
     `, [`%${hashtag.trim()}%`, userId]);
