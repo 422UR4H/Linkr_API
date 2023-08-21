@@ -20,7 +20,7 @@ export function getPostsDB() {
                 GROUP BY posts.id
             ) AS l ON p.id = l.post_id
             LEFT JOIN users u ON p.owner_id = u.id
-            ORDER BY p.id DESC;`
+            ORDER BY p.created_at DESC;`
     );
 }
 
@@ -61,7 +61,7 @@ export function getPostsDBRefactored(userId) {
             ORDER BY id ASC
             LIMIT 1 OFFSET 1
         )
-        ORDER BY posts.id DESC
+        ORDER BY posts.created_at DESC
         LIMIT 20;`
         , [userId]);
 }
@@ -84,7 +84,7 @@ export async function getPostsByHashtagDB(hashtag) {
         ) AS l ON p.id = l.post_id
         LEFT JOIN users u ON p.owner_id = u.id
         WHERE p.hash_tags ILIKE $1
-        ORDER BY p.id DESC;
+        ORDER BY p.created_at DESC;
     `, [`%${hashtag.trim()}%`]);
 }
 
@@ -121,7 +121,7 @@ export async function getPostsByHashtagDBRefactored(hashtag, userId) {
         LIMIT 1 OFFSET 1
     )
     WHERE p.hash_tags LIKE $1
-    ORDER BY p.id DESC
+    ORDER BY p.created_at DESC
     LIMIT 20;
     `, [`%${hashtag.trim()}%`, userId]);
 }
