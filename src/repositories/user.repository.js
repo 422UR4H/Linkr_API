@@ -90,30 +90,22 @@ export async function getAllInfoFromUserId(userId) {
 export async function getFirstLikeNamesFromPost(postId) {
     try {
         const query = `
-        SELECT
-            users.user_name
-        FROM
-            likes
-        JOIN
-            users ON likes.like_owner_id = users.id
-        WHERE
-            likes.liked_post_id = $1
-        LIMIT 2;
-        `;
+        SELECT users.user_name
+        FROM likes
+        JOIN users ON likes.like_owner_id = users.id
+        WHERE likes.liked_post_id = $1
+        LIMIT 2;`;
 
         const names = await clientDB.query(query, [postId]);
         return {
-            first_liker_name: names.rows[0] ? names.rows[0].user_name : "" ,
+            first_liker_name: names.rows[0] ? names.rows[0].user_name : "",
             second_liker_name: names.rows[1] ? names.rows[1].user_name : ""
         };
-
     } catch (error) {
         console.log(error.message);
         return null;
     }
 }
-
-
 
 export async function getUsersFilterName(name) {
     try {
@@ -127,10 +119,10 @@ export async function getUsersFilterName(name) {
     }
 }
 
-export async function userHasLikedPost(postId,userId) {
+export async function userHasLikedPost(postId, userId) {
     try {
         const query = 'SELECT * FROM likes WHERE like_owner_id = $1 AND liked_post_id = $2';
-        const result = await clientDB.query(query, [userId,postId]);
+        const result = await clientDB.query(query, [userId, postId]);
         return result.rows.length > 0;
     } catch (error) {
         console.log(error.message);
