@@ -52,13 +52,13 @@ export function getPostsDBRefactored(userId) {
         LEFT JOIN users first_liker ON first_liker.id = (
             SELECT like_owner_id FROM likes 
             WHERE liked_post_id = posts.id
-            ORDER BY id ASC
+            ORDER BY created_at ASC
             LIMIT 1
         )
         LEFT JOIN users second_liker ON second_liker.id = (
             SELECT like_owner_id FROM likes 
             WHERE liked_post_id = posts.id
-            ORDER BY id ASC
+            ORDER BY created_at ASC
             LIMIT 1 OFFSET 1
         )
         ORDER BY posts.created_at DESC
@@ -111,13 +111,13 @@ export async function getPostsByHashtagDBRefactored(hashtag, userId) {
     LEFT JOIN users fl ON fl.id = (
         SELECT like_owner_id FROM likes 
         WHERE liked_post_id = p.id
-        ORDER BY id ASC
+        ORDER BY created_at ASC
         LIMIT 1
     )
     LEFT JOIN users sl ON sl.id = (
         SELECT like_owner_id FROM likes 
         WHERE liked_post_id = p.id
-        ORDER BY id ASC
+        ORDER BY created_at ASC
         LIMIT 1 OFFSET 1
     )
     WHERE p.hash_tags LIKE $1
