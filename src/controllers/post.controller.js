@@ -1,47 +1,12 @@
-import urlMetadata from "../Utils/urlMetadata.js";
-import { getFirstLikeNamesFromPost, userHasLikedPost } from "../repositories/user.repository.js";
+
 import {
   addPost,
   deletePost,
   editPost,
-  getPostsByHashtagDB,
+  getPostsByHashtagDBRefactored,
   getPostsById,
-  getPostsDB,
   getPostsDBRefactored
 } from "../repositories/post.repository.js";
-
-
-export async function getPosts(req, res) {
-  try {
-    const getPosts = await getPostsDB();
-    const posts = getPosts.rows;
-    for (const post of posts) {
-      try {
-        const metadata = (await urlMetadata(post.link)).data;
-        post.metadata = {
-          description: metadata.description ? metadata.description : "",
-          title: metadata.title ? metadata.title : "",
-          image:
-            metadata.images && metadata.images[0] ? metadata.images[0] : "",
-        };
-
-        post.default_liked = await userHasLikedPost(
-          post.id,
-          res.locals.user.id
-        );
-        const names = await getFirstLikeNamesFromPost(post.id);
-        post.first_liker_name = names.first_liker_name;
-        post.second_liker_name = names.second_liker_name;
-      } catch (err) {
-        console.log(err.message);
-      }
-    }
-    res.status(200).send(posts);
-  } catch (err) {
-    console.log(err);
-    res.status(500).send("Erro ao requerir o post");
-  }
-}
 
 export async function getTimelinePostsRefactored(req, res) {
   try {
@@ -50,36 +15,6 @@ export async function getTimelinePostsRefactored(req, res) {
   } catch (err) {
     console.log(err);
     return res.status(500).send("Internal server error getting timeline posts")
-  }
-}
-
-export async function getPostsByHashtag(req, res) {
-  const { hashtag } = req.params
-  try {
-    const tredingPosts = await getPostsByHashtagDB(hashtag)
-    const posts = tredingPosts.rows;
-
-    for (const post of posts) {
-      try {
-        const metadata = (await urlMetadata(post.link)).data;
-        post.metadata =
-        {
-          description: metadata.description ? metadata.description : "",
-          title: metadata.title ? metadata.title : "",
-          image: metadata.images && metadata.images[0] ? metadata.images[0] : ""
-        };
-        post.default_liked = await userHasLikedPost(post.id, res.locals.user.id);
-        const names = await getFirstLikeNamesFromPost(post.id);
-        post.first_liker_name = names.first_liker_name;
-        post.second_liker_name = names.second_liker_name;
-      } catch (err) {
-        console.log(err.message);
-      }
-    }
-    res.send(posts)
-  } catch (error) {
-    console.log(error.message)
-    res.sendStatus(500)
   }
 }
 
@@ -126,5 +61,18 @@ export async function removePost(req, res) {
     return res.sendStatus(204);
   } catch (error) {
     return res.status(500).send(error.message);
+  }
+}
+
+export async function getPostsByHashtagRefactored(req, res) {
+  const {hashtag} = req.params;
+
+  try {
+      const tredingPosts = await getPostsByHashtagDBRefactored(hashtag,res.locals.user.id);
+      return res.send(tredingPosts.rows);
+      
+  } catch (error) {
+      console.log(error.message)
+      return res.sendStatus(500)
   }
 }
