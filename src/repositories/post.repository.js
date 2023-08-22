@@ -54,16 +54,17 @@ export function getPostsDBRefactored(userId) {
         LEFT JOIN users first_liker ON first_liker.id = (
             SELECT like_owner_id FROM likes 
             WHERE liked_post_id = posts.id
-            ORDER BY created_at ASC
             LIMIT 1
         )
         LEFT JOIN users second_liker ON second_liker.id = (
             SELECT like_owner_id FROM likes 
             WHERE liked_post_id = posts.id
-            ORDER BY created_at ASC
             LIMIT 1 OFFSET 1
         )
-        WHERE followers.follower = $1
+        WHERE posts.owner_id = $1 
+        OR posts.owner_id IN (
+        SELECT following FROM followers WHERE follower = $1 
+        )
         ORDER BY posts.created_at DESC
         `,
     [userId]
