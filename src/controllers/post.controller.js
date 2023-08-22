@@ -5,7 +5,8 @@ import {
   editPost,
   getPostsByHashtagDBRefactored,
   getPostsById,
-  getPostsDBRefactored
+  getPostsDBRefactored,
+  repostDB
 } from "../repositories/post.repository.js";
 import { getFollowersFromUser } from "./users.controller.js";
 
@@ -86,6 +87,17 @@ export async function getPostsByHashtagRefactored(req, res) {
   } catch (error) {
       console.log(error.message)
       return res.sendStatus(500)
+  }
+}
+
+export async function repost(req, res) {
+  const {postId} = req.body;
+  try {
+      await repostDB(postId,res.locals.user.id);
+      return res.sendStatus(201);
+  } catch (error) {
+      console.log(error.message)
+      return res.status(500).send(error.message);
   }
 }
 

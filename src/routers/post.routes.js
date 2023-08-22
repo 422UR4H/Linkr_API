@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { editPostSchema, postSchema } from "../schemas/post.schema.js";
+import { editPostSchema, postSchema, repostSchema } from "../schemas/post.schema.js";
 import validateAuth from "../middlewares/validateAuth.js";
 import validateSchema from "../middlewares/validateSchema.js";
 import {
@@ -7,6 +7,7 @@ import {
   getTimelinePostsRefactored,
   publishPost,
   removePost,
+  repost,
   updatePost,
 } from "../controllers/post.controller.js";
 const postRouter = Router();
@@ -16,5 +17,7 @@ postRouter.get("/timeline",validateAuth, getTimelinePostsRefactored);
 postRouter.get("/posts/:hashtag", validateAuth, getPostsByHashtagRefactored);
 postRouter.put("/posts/:id", validateAuth, validateSchema(editPostSchema), updatePost);
 postRouter.delete("/posts/:id", validateAuth, removePost);
+postRouter.post("/repost", validateAuth, validateSchema(repostSchema), repost);
+
 
 export default postRouter;

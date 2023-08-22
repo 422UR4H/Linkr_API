@@ -147,3 +147,9 @@ export async function editPost(description, hash_tags, id) {
 export async function deletePost(id) {
   return await clientDB.query(`DELETE FROM posts WHERE id = $1`, [id]);
 }
+
+export async function repostDB(postId,userId) {
+  return clientDB.query(`
+  INSERT INTO reposts ("reposted_by_id","references_post_id")
+  VALUES( $1 , $2 )`, [userId,postId]);
+}
