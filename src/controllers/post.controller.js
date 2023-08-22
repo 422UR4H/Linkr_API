@@ -17,7 +17,7 @@ export async function getTimelinePostsRefactored(req, res) {
 
     if (getPosts.rows.length === 0) {
       if (!userIsFollowing) {
-        return res.sendStatus(404); 
+        return res.sendStatus(202); 
       } else {
         return res.sendStatus(204);
       }
