@@ -7,14 +7,25 @@ import {
   getPostsById,
   getPostsDBRefactored
 } from "../repositories/post.repository.js";
+import { getFollowersFromUser } from "./users.controller.js";
 
 export async function getTimelinePostsRefactored(req, res) {
   try {
+    const userId= res.locals.user.id;
+
+    const userIsFollowing = await getFollowersFromUser(userId)
+
+    if(!userIsFollowing) return res.status(404).send("You don't follow anyone yet. Search for new friends!");
     const getPosts = await getPostsDBRefactored(res.locals.user.id);
+
+    if (getPosts.rows.length === 0) {
+      return res.sendStatus(204)
+    }
+
     return res.status(200).send(getPosts.rows);
   } catch (err) {
     console.log(err);
-    return res.status(500).send("Internal server error getting timeline posts")
+    return res.status(500)
   }
 }
 
@@ -76,3 +87,4 @@ export async function getPostsByHashtagRefactored(req, res) {
       return res.sendStatus(500)
   }
 }
+

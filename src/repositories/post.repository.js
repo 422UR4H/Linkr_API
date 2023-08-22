@@ -1,17 +1,18 @@
 import { clientDB } from "../database/db.connection.js";
 
 export async function addPost(owner_id, post) {
-    const { link, description, hash_tags } = post;
-    return await clientDB.query(`
+  const { link, description, hash_tags } = post;
+  return await clientDB.query(
+    `
         INSERT INTO posts ("link", "description", "hash_tags", "owner_id") 
         VALUES ($1, $2, $3, $4)`,
-        [link, description, hash_tags, owner_id]
-    );
+    [link, description, hash_tags, owner_id]
+  );
 }
 
 export function getPostsDB() {
-    return clientDB.query(
-        `SELECT p.*, l.likes_count, u.user_name AS user_name, u.photo AS user_photo
+  return clientDB.query(
+    `SELECT p.*, l.likes_count, u.user_name AS user_name, u.photo AS user_photo
             FROM posts p
             LEFT JOIN (
                 SELECT posts.id AS post_id, COUNT(l.id) AS likes_count
@@ -21,12 +22,12 @@ export function getPostsDB() {
             ) AS l ON p.id = l.post_id
             LEFT JOIN users u ON p.owner_id = u.id
             ORDER BY p.created_at DESC;`
-    );
+  );
 }
 
 export function getPostsDBRefactored(userId) {
-    return clientDB.query(
-        `SELECT 
+  return clientDB.query(
+    `SELECT 
         posts.*, 
         like_counts.likes_count, 
         users.user_name AS user_name, 
@@ -40,6 +41,7 @@ export function getPostsDBRefactored(userId) {
         COALESCE(first_liker.user_name, '') AS first_liker_name,
         COALESCE(second_liker.user_name, '') AS second_liker_name
         FROM posts
+        JOIN followers ON posts.owner_id = followers.following
         LEFT JOIN (
             SELECT 
                 posts.id AS post_id, 
@@ -61,19 +63,21 @@ export function getPostsDBRefactored(userId) {
             ORDER BY created_at ASC
             LIMIT 1 OFFSET 1
         )
+        WHERE followers.follower = $1
         ORDER BY posts.created_at DESC
-        LIMIT 20;`
-        , [userId]);
+        `,
+    [userId]
+  );
 }
 
 export async function getPostsById(id) {
-    const posts = await clientDB.query(`SELECT * FROM posts WHERE id = $1`, [id]);
-    return posts.rows[0];
+  const posts = await clientDB.query(`SELECT * FROM posts WHERE id = $1`, [id]);
+  return posts.rows[0];
 }
 
 export async function getPostsByHashtagDB(hashtag) {
-    return clientDB.query(
-        `SELECT p.id, p.link, p.description, p.hash_tags, p.owner_id, p.created_at,
+  return clientDB.query(
+    `SELECT p.id, p.link, p.description, p.hash_tags, p.owner_id, p.created_at,
             l.likes_count, u.user_name, u.photo as user_photo
         FROM posts p
         LEFT JOIN (
@@ -85,11 +89,14 @@ export async function getPostsByHashtagDB(hashtag) {
         LEFT JOIN users u ON p.owner_id = u.id
         WHERE p.hash_tags ILIKE $1
         ORDER BY p.created_at DESC;
-    `, [`%${hashtag.trim()}%`]);
+    `,
+    [`%${hashtag.trim()}%`]
+  );
 }
 
 export async function getPostsByHashtagDBRefactored(hashtag, userId) {
-    return clientDB.query(`
+  return clientDB.query(
+    `
     SELECT p.id, p.link, p.description, p.hash_tags, p.owner_id, p.created_at,
         l.likes_count, u.user_name, u.photo AS user_photo,
     COALESCE(fl.user_name, '') AS first_liker_name,
@@ -123,16 +130,19 @@ export async function getPostsByHashtagDBRefactored(hashtag, userId) {
     WHERE p.hash_tags LIKE $1
     ORDER BY p.created_at DESC
     LIMIT 20;
-    `, [`%${hashtag.trim()}%`, userId]);
+    `,
+    [`%${hashtag.trim()}%`, userId]
+  );
 }
 
 export async function editPost(description, hash_tags, id) {
-    return await clientDB.query(`
+  return await clientDB.query(
+    `
         UPDATE posts SET "description"=$1, "hash_tags"=$2 WHERE "id"=$3`,
-        [description, hash_tags, id]
-    );
+    [description, hash_tags, id]
+  );
 }
 
 export async function deletePost(id) {
-    return await clientDB.query(`DELETE FROM posts WHERE id = $1`, [id]);
+  return await clientDB.query(`DELETE FROM posts WHERE id = $1`, [id]);
 }
