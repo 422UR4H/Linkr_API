@@ -1,5 +1,6 @@
 import {
     getAllInfoFromUserIdRefactored,
+    getFollowersFromUserDB,
     getUsersFilterName,
 } from "../repositories/user.repository.js";
 
@@ -29,3 +30,13 @@ export async function getUsersWithName(req, res) {
         res.status(500).send({ message });
     }
 }
+
+export async function getFollowersFromUser(userId) {
+    try {
+        const followers = await getFollowersFromUserDB(userId);
+        return followers.length > 0;
+      } catch (error) {
+        console.log(error.message);
+        return false;
+      }
+  }

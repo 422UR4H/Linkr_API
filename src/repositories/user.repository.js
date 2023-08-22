@@ -149,3 +149,17 @@ export async function userHasLikedPost(postId, userId) {
         return false;
     }
 }
+
+export async function getFollowersFromUserDB(userId) {
+    try {
+      const query = `
+        SELECT following
+        FROM followers
+        WHERE following = $1;`;
+      const result = await clientDB.query(query, [userId]);
+      return result.rows;
+    } catch (error) {
+      console.log(error.message);
+      return [];
+    }
+  }
