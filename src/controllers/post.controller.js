@@ -15,6 +15,7 @@ export async function getTimelinePostsRefactored(req, res) {
     const userId= res.locals.user.id;
     const userIsFollowing = await getFollowersFromUser(userId)
     const getPosts = await getPostsDBRefactored(res.locals.user.id);
+    console.log(getPosts.rows);
 
     if (getPosts.rows.length === 0) {
       if (!userIsFollowing) {
