@@ -21,7 +21,7 @@ export async function getUserPageInfoRefactored(req, res) {
 export async function getUsersWithName(req, res) {
     const { name } = req.params;
     try {
-        const users = await getUsersFilterName(name);
+        const users = await getUsersFilterName(name,res.locals.user.id);
         if (users == null) {
             return res.status(404).send(`No users found with id ${name}`);
         }

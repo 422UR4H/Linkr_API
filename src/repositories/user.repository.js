@@ -125,13 +125,20 @@ export async function getFirstLikeNamesFromPost(postId) {
     }
 }
 
-export async function getUsersFilterName(name) {
+export async function getUsersFilterName(name,userId) {
     try {
         const query = `
-            SELECT id, user_name, photo
-            FROM users
-            WHERE user_name ILIKE $1`;
-        const result = await clientDB.query(query, [`%${name.trim()}%`]);
+        SELECT users.id, users.user_name, users.photo,
+        CASE 
+            WHEN followers.follower IS NOT NULL THEN TRUE 
+            ELSE FALSE 
+        END AS following
+        FROM users
+        LEFT JOIN followers ON users.id = followers.following AND followers.follower = $1
+        WHERE users.user_name ILIKE $2
+        ORDER BY following DESC;
+        `;
+        const result = await clientDB.query(query, [userId,`%${name.trim()}%`]);
         return result.rows;
     } catch (error) {
         console.log(error.message);
