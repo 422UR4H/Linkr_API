@@ -34,7 +34,7 @@ export async function getUsersWithName(req, res) {
 export async function getFollowersFromUser(userId) {
     try {
         const followers = await getFollowersFromUserDB(userId);
-        return followers.length > 0;
+        return followers.rows.length > 0; 
       } catch (error) {
         console.log(error.message);
         return false;
