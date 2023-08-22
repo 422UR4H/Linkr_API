@@ -10,3 +10,7 @@ export const editPostSchema = joi.object({
     description: joi.string(),
     hash_tags: joi.string()
 });
+
+export const repostSchema = joi.object({
+    postId: joi.string().required()
+});

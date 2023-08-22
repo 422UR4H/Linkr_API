@@ -30,6 +30,7 @@ export function getPostsDBRefactored(userId) {
     `SELECT 
         posts.*, 
         like_counts.likes_count, 
+        repost_counts.repost_count,
         users.user_name AS user_name, 
         users.photo AS user_photo,
         CASE 
@@ -50,6 +51,13 @@ export function getPostsDBRefactored(userId) {
             LEFT JOIN likes ON posts.id = likes.liked_post_id
             GROUP BY posts.id
         ) AS like_counts ON posts.id = like_counts.post_id
+        LEFT JOIN (
+          SELECT 
+              references_post_id AS post_id, 
+              COUNT(id) AS repost_count
+          FROM reposts
+          GROUP BY references_post_id
+      ) AS repost_counts ON posts.id = repost_counts.post_id
         LEFT JOIN users ON posts.owner_id = users.id
         LEFT JOIN users first_liker ON first_liker.id = (
             SELECT like_owner_id FROM likes 
@@ -146,4 +154,10 @@ export async function editPost(description, hash_tags, id) {
 
 export async function deletePost(id) {
   return await clientDB.query(`DELETE FROM posts WHERE id = $1`, [id]);
+}
+
+export async function repostDB(postId,userId) {
+  return clientDB.query(`
+  INSERT INTO reposts ("reposted_by_id","references_post_id")
+  VALUES( $1 , $2 )`, [userId,postId]);
 }
