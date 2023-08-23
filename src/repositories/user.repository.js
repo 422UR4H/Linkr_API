@@ -176,9 +176,8 @@ export async function getFollowersFromUserDB(userId) {
       console.log(error.message);
       return [];
     }
-}
+  export async function getRepostsFromUser(userId,viewerId) {
 
-export async function getRepostsFromUser(userTargetId,viewerId) {
     try {
         const query = `
         SELECT
@@ -242,6 +241,7 @@ export async function getRepostsFromUser(userTargetId,viewerId) {
     }
 }
 
+  }
   export async function addFollower(follower,following) {
     return await clientDB.query(`
     INSERT INTO followers ("follower", "following") VALUES ($1, $2)`,
