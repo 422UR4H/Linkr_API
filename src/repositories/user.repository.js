@@ -170,3 +170,15 @@ export async function getFollowersFromUserDB(userId) {
       return [];
     }
   }
+
+  export async function addFollower(follower,following) {
+    return await clientDB.query(`
+    INSERT INTO followers ("follower", "following") VALUES ($1, $2)`,
+    [follower,following]);
+  }
+
+  export async function removeFollower(follower,following) {
+    return await clientDB.query(`DELETE FROM followers WHERE follower = $1 AND following = $2`,
+    [follower,following]);
+  }
+
