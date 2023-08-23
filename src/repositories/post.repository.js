@@ -27,7 +27,7 @@ export function getPostsDB() {
 
 export function getPostsDBRefactored(userId,offset) {
   return clientDB.query(
-    `SELECT 
+    `SELECT DISTINCT
         posts.*, 
         like_counts.likes_count, 
         repost_counts.repost_count,
@@ -150,3 +150,56 @@ export async function repostDB(postId,userId) {
   INSERT INTO reposts ("reposted_by_id","references_post_id")
   VALUES( $1 , $2 )`, [userId,postId]);
 }
+
+
+/*
+
+SELECT DISTINCT
+    posts.*, 
+    like_counts.likes_count, 
+    repost_counts.repost_count,
+    users.user_name AS user_name, 
+    users.photo AS user_photo,
+    CASE 
+        WHEN EXISTS (
+            SELECT 1 FROM likes WHERE liked_post_id = posts.id AND like_owner_id = $1
+        ) THEN TRUE 
+        ELSE FALSE 
+    END AS default_liked,
+    COALESCE(first_liker.user_name, '') AS first_liker_name,
+    COALESCE(second_liker.user_name, '') AS second_liker_name
+FROM posts
+JOIN followers ON posts.owner_id = followers.following
+LEFT JOIN (
+    SELECT 
+        liked_post_id, 
+        COUNT(*) AS likes_count
+    FROM likes
+    GROUP BY liked_post_id
+) AS like_counts ON posts.id = like_counts.liked_post_id
+LEFT JOIN (
+    SELECT 
+        references_post_id AS post_id, 
+        COUNT(*) AS repost_count
+    FROM reposts
+    GROUP BY references_post_id
+) AS repost_counts ON posts.id = repost_counts.post_id
+LEFT JOIN users ON posts.owner_id = users.id
+LEFT JOIN users first_liker ON first_liker.id = (
+    SELECT like_owner_id FROM likes 
+    WHERE liked_post_id = posts.id
+    LIMIT 1
+)
+LEFT JOIN users second_liker ON second_liker.id = (
+    SELECT like_owner_id FROM likes 
+    WHERE liked_post_id = posts.id
+    LIMIT 1 OFFSET 1
+)
+WHERE posts.owner_id = $1 
+OR posts.owner_id IN (
+    SELECT following FROM followers WHERE follower = $1 
+)
+ORDER BY posts.created_at DESC
+LIMIT 10 OFFSET $2;
+
+*/
