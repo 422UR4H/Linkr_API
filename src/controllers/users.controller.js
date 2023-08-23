@@ -2,6 +2,7 @@ import {
     addFollower,
     getAllInfoFromUserIdRefactored,
     getFollowersFromUserDB,
+    getRepostsFromUser,
     getUsersFilterName,
     removeFollower,
 } from "../repositories/user.repository.js";
@@ -13,6 +14,8 @@ export async function getUserPageInfoRefactored(req, res) {
         if (user == null) {
             return res.status(404).send(`No users found with id ${id}`);
         }
+        const userReposts = await getRepostsFromUser(id,res.locals.user.id);
+        user.user_posts = [...user.user_posts,...userReposts];
         return res.status(200).send(user);
     } catch ({ message }) {
         console.log(message);

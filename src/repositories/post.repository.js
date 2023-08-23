@@ -10,19 +10,8 @@ export async function addPost(owner_id, post) {
   );
 }
 
-export function getPostsDB() {
-  return clientDB.query(
-    `SELECT p.*, l.likes_count, u.user_name AS user_name, u.photo AS user_photo
-            FROM posts p
-            LEFT JOIN (
-                SELECT posts.id AS post_id, COUNT(l.id) AS likes_count
-                FROM posts 
-                LEFT JOIN likes l ON posts.id = l.liked_post_id
-                GROUP BY posts.id
-            ) AS l ON p.id = l.post_id
-            LEFT JOIN users u ON p.owner_id = u.id
-            ORDER BY p.created_at DESC;`
-  );
+export function getPostsHashtags() {
+  return clientDB.query(`SELECT posts.hash_tags FROM posts;`);
 }
 
 export function getPostsDBRefactored(userId,offset) {
@@ -84,6 +73,13 @@ export async function getPostsById(id) {
   const posts = await clientDB.query(`SELECT * FROM posts WHERE id = $1`, [id]);
   return posts.rows[0];
 }
+
+export async function getRepostsById(id) {
+  const posts = await clientDB.query(`SELECT * FROM reposts WHERE id = $1`, [id]);
+  return posts.rows[0];
+}
+
+
 
 export async function getPostsByHashtagDBRefactored(hashtag, userId) {
   return clientDB.query(
@@ -147,6 +143,12 @@ export async function editPost(description, hash_tags, id) {
 export async function deletePost(id) {
   return await clientDB.query(`DELETE FROM posts WHERE id = $1`, [id]);
 }
+
+export async function deleteRepost(id) {
+  return await clientDB.query(`DELETE FROM reposts WHERE id = $1`, [id]);
+}
+
+
 
 export async function repostDB(postId,userId) {
   return clientDB.query(`

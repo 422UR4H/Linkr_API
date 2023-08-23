@@ -1,12 +1,12 @@
 import sortByFrequency from "../scripts/sortByFrequency.js";
-import { getPostsDB } from "../repositories/post.repository.js";
+import { getPostsHashtags } from "../repositories/post.repository.js";
 
 export async function getTrendingHashtags(req, res) {
     try {
         let cleanHashtags = [];
         let allHashtagsArray = [];
         let allHashtagsStrings = '';
-        const allPosts = await getPostsDB();
+        const allPosts = await getPostsHashtags();
 
         allPosts.rows.forEach(post => {
             const hashtagString = post.hash_tags;
