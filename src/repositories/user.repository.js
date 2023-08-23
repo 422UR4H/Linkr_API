@@ -176,6 +176,7 @@ export async function getFollowersFromUserDB(userId) {
     }
   }
 
+<<<<<<< fix/repost_count
   /**           SELECT
             json_build_object(
             'user_id', users.id,
@@ -228,3 +229,16 @@ export async function getFollowersFromUserDB(userId) {
             )
             WHERE users.id = $1
             GROUP BY users.id, users.user_name, users.photo; */
+
+  export async function addFollower(follower,following) {
+    return await clientDB.query(`
+    INSERT INTO followers ("follower", "following") VALUES ($1, $2)`,
+    [follower,following]);
+  }
+
+  export async function removeFollower(follower,following) {
+    return await clientDB.query(`DELETE FROM followers WHERE follower = $1 AND following = $2`,
+    [follower,following]);
+  }
+
+>>>>>>> main
