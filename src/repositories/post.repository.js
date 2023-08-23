@@ -14,7 +14,7 @@ export function getPostsHashtags() {
   return clientDB.query(`SELECT posts.hash_tags FROM posts;`);
 }
 
-export function getPostsDBRefactored(userId,offset) {
+export function getPostsDBRefactored(userId, offset) {
   return clientDB.query(
     `SELECT DISTINCT
         posts.*, 
@@ -65,7 +65,7 @@ export function getPostsDBRefactored(userId,offset) {
         ORDER BY posts.created_at DESC
         LIMIT 10 OFFSET $2;
         `,
-    [userId,offset]
+    [userId, offset]
   );
 }
 
@@ -75,11 +75,11 @@ export async function getPostsById(id) {
 }
 
 export async function getRepostsById(id) {
-  const posts = await clientDB.query(`SELECT * FROM reposts WHERE id = $1`, [id]);
+  const posts = await clientDB.query(`SELECT * FROM reposts WHERE id = $1`, [
+    id,
+  ]);
   return posts.rows[0];
 }
-
-
 
 export async function getPostsByHashtagDBRefactored(hashtag, userId) {
   return clientDB.query(
@@ -131,9 +131,9 @@ export async function getPostsByHashtagDBRefactored(hashtag, userId) {
   );
 }
 
-export async function getRepostsWithHashtag(hashtag,viewerId) {
+export async function getRepostsWithHashtag(hashtag, viewerId) {
   try {
-      const query = `
+    const query = `
       SELECT
         reposts.id AS repost_id,
         reposts.created_at AS repost_created_at,
@@ -184,15 +184,18 @@ export async function getRepostsWithHashtag(hashtag,viewerId) {
       WHERE posts.hash_tags LIKE $1
       ORDER BY reposts.created_at DESC;
       `;
-      return clientDB.query(query, [`%${hashtag.trim()}%`,viewerId]);
+    return clientDB.query(query, [`%${hashtag.trim()}%`, viewerId]);
   } catch (error) {
-      console.log(error.message);
-      return [];
+    console.log(error.message);
+    return [];
   }
 }
 
 export async function editPost(description, hash_tags, id) {
-  return await clientDB.query(`UPDATE posts SET "description"=$1, "hash_tags"=$2 WHERE "id"=$3`,[description, hash_tags, id]);
+  return await clientDB.query(
+    `UPDATE posts SET "description"=$1, "hash_tags"=$2 WHERE "id"=$3`,
+    [description, hash_tags, id]
+  );
 }
 
 export async function deletePost(id) {
@@ -203,8 +206,11 @@ export async function deleteRepost(id) {
   return await clientDB.query(`DELETE FROM reposts WHERE id = $1`, [id]);
 }
 
-export async function repostDB(postId,userId) {
-  return clientDB.query(`
+export async function repostDB(postId, userId) {
+  return clientDB.query(
+    `
   INSERT INTO reposts ("reposted_by_id","references_post_id")
-  VALUES( $1 , $2 )`, [userId,postId]);
+  VALUES( $1 , $2 )`,
+    [userId, postId]
+  );
 }
