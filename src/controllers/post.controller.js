@@ -1,4 +1,3 @@
-
 import {
   addPost,
   deletePost,
@@ -8,6 +7,7 @@ import {
   getPostsById,
   getPostsDBRefactored,
   getRepostsById,
+  getRepostsWithHashtag,
   repostDB
 } from "../repositories/post.repository.js";
 import { getFollowersFromUser } from "./users.controller.js";
@@ -116,8 +116,10 @@ export async function getPostsByHashtagRefactored(req, res) {
   const {hashtag} = req.params;
 
   try {
-      const tredingPosts = await getPostsByHashtagDBRefactored(hashtag,res.locals.user.id);
-      return res.send(tredingPosts.rows);
+      const postsFilteredByHashtag = (await getPostsByHashtagDBRefactored(hashtag,res.locals.user.id)).rows;
+      const repostsFilteredByHastag = (await getRepostsWithHashtag(hashtag,res.locals.user.id)).rows;
+      const response = [...postsFilteredByHashtag,...repostsFilteredByHastag];
+      return res.send(response);
       
   } catch (error) {
       console.log(error.message)
