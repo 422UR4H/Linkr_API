@@ -2,10 +2,12 @@
 import {
   addPost,
   deletePost,
+  deleteRepost,
   editPost,
   getPostsByHashtagDBRefactored,
   getPostsById,
   getPostsDBRefactored,
+  getRepostsById,
   repostDB
 } from "../repositories/post.repository.js";
 import { getFollowersFromUser } from "./users.controller.js";
@@ -91,6 +93,24 @@ export async function removePost(req, res) {
     return res.status(500).send(error.message);
   }
 }
+
+export async function removeRepost(req, res) {
+  const id = req.params.id;
+  const user = res.locals.user;
+  const post = await getRepostsById(id);
+
+  if (post.reposted_by_id != user.id) {
+    return res.status(401).send("Repost não foi deletado");
+  }
+
+  try {
+    await deleteRepost(id);
+    return res.sendStatus(204);
+  } catch (error) {
+    return res.status(500).send(error.message);
+  }
+}
+
 
 export async function getPostsByHashtagRefactored(req, res) {
   const {hashtag} = req.params;

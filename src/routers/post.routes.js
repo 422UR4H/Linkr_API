@@ -7,6 +7,7 @@ import {
   getTimelinePostsRefactored,
   publishPost,
   removePost,
+  removeRepost,
   repost,
   updatePost,
 } from "../controllers/post.controller.js";
@@ -17,6 +18,7 @@ postRouter.get("/timeline",validateAuth, getTimelinePostsRefactored);
 postRouter.get("/posts/:hashtag", validateAuth, getPostsByHashtagRefactored);
 postRouter.put("/posts/:id", validateAuth, validateSchema(editPostSchema), updatePost);
 postRouter.delete("/posts/:id", validateAuth, removePost);
+postRouter.delete("/reposts/:id", validateAuth, removeRepost);
 postRouter.post("/repost", validateAuth, validateSchema(repostSchema), repost);
 
 
