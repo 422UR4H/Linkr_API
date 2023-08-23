@@ -22,6 +22,7 @@ export function getPostsDBRefactored(userId, offset) {
         repost_counts.repost_count,
         users.user_name AS user_name, 
         users.photo AS user_photo,
+        false as is_repost,
         CASE 
             WHEN EXISTS (
                 SELECT 1 FROM likes WHERE liked_post_id = posts.id AND like_owner_id = $1
