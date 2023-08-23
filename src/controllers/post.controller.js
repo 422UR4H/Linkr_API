@@ -15,13 +15,15 @@ import { getRepostsFromUser } from "../repositories/user.repository.js";
 import { getFollowersFromUser } from "./users.controller.js";
 
 export async function getTimelinePostsRefactored(req, res) {
+  const page = parseInt(req.query.page, 10) || 0;
+
   try {
     const userId = res.locals.user.id;
     const userIsFollowing = await getFollowersFromUser(userId);
 
-    const page = req.query.page || 0;
     const postsPerPage = 10;
     const offset = page * postsPerPage;
+    console.log("Debug: offset =", offset);
 
     console.log("Debug: userId =", userId);
     console.log("Debug: userIsFollowing =", userIsFollowing);
@@ -29,12 +31,19 @@ export async function getTimelinePostsRefactored(req, res) {
     console.log("Debug: postsPerPage =", postsPerPage);
     console.log("Debug: offset =", offset);
 
-    const getPosts = (await getPostsDBRefactored(res.locals.user.id, offset)).rows;
-    const getReposts = await getRepostsFromUser(res.locals.user.id,res.locals.user.id);
-    const slicedReposts = getReposts.slice(offset,getReposts.length);
-    const allPostsAndRepostsFromUserTimeline = sortPostsByDate([...getPosts,...slicedReposts]); //Ordenar por data de criação
+    const getPosts = (await getPostsDBRefactored(res.locals.user.id, offset))
+      .rows;
+    const getReposts = await getRepostsFromUser(
+      res.locals.user.id,
+      res.locals.user.id
+    );
+    const slicedReposts = getReposts.slice(offset, getReposts.length);
+    const allPostsAndRepostsFromUserTimeline = sortPostsByDate([
+      ...getPosts,
+      ...slicedReposts,
+    ]); //Ordenar por data de criação
 
-    const responseFinal = allPostsAndRepostsFromUserTimeline.slice(0,10);
+    const responseFinal = allPostsAndRepostsFromUserTimeline.slice(0, 10);
 
     if (getPosts.length === 0) {
       if (!userIsFollowing) {
