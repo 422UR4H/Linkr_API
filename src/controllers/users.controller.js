@@ -1,7 +1,9 @@
 import {
+    addFollower,
     getAllInfoFromUserIdRefactored,
     getFollowersFromUserDB,
     getUsersFilterName,
+    removeFollower,
 } from "../repositories/user.repository.js";
 
 export async function getUserPageInfoRefactored(req, res) {
@@ -39,4 +41,28 @@ export async function getFollowersFromUser(userId) {
         console.log(error.message);
         return false;
       }
+  }
+
+  export async function follow(req,res) {
+    const follower = res.locals.user;
+    const following = req.params;
+
+    try {
+        await addFollower(follower.id,following.id);
+        return res.sendStatus(201);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+  }
+
+  export async function unfollow(req,res) {
+    const follower = res.locals.user;
+    const following = req.params;
+
+    try {
+        await removeFollower(follower.id, following.id);
+        return res.sendStatus(201);        
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
   }
