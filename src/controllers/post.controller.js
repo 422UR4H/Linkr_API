@@ -1,3 +1,4 @@
+import { sortPostsByDate } from "../Utils/orderPostsData.js";
 import {
   addPost,
   deletePost,
@@ -10,6 +11,7 @@ import {
   getRepostsWithHashtag,
   repostDB,
 } from "../repositories/post.repository.js";
+import { getRepostsFromUser } from "../repositories/user.repository.js";
 import { getFollowersFromUser } from "./users.controller.js";
 
 export async function getTimelinePostsRefactored(req, res) {
@@ -27,10 +29,14 @@ export async function getTimelinePostsRefactored(req, res) {
     console.log("Debug: postsPerPage =", postsPerPage);
     console.log("Debug: offset =", offset);
 
-    const getPosts = await getPostsDBRefactored(res.locals.user.id, offset);
-    console.log("Debug: getPosts =", getPosts.rows);
+    const getPosts = (await getPostsDBRefactored(res.locals.user.id, offset)).rows;
+    const getReposts = await getRepostsFromUser(res.locals.user.id,res.locals.user.id);
+    const slicedReposts = getReposts.slice(offset,getReposts.length);
+    const allPostsAndRepostsFromUserTimeline = sortPostsByDate([...getPosts,...slicedReposts]); //Ordenar por data de criação
 
-    if (getPosts.rows.length === 0) {
+    const responseFinal = allPostsAndRepostsFromUserTimeline.slice(0,10);
+
+    if (getPosts.length === 0) {
       if (!userIsFollowing) {
         console.log("Debug: Sending 202");
         return res.sendStatus(202);
@@ -41,7 +47,7 @@ export async function getTimelinePostsRefactored(req, res) {
     }
 
     console.log("Debug: Sending 200");
-    res.status(200).send(getPosts.rows);
+    res.status(200).send(responseFinal);
   } catch (err) {
     console.log(err);
     return res.status(500).send(err);
