@@ -45,51 +45,56 @@ export async function getAllInfoFromUserIdRefactored(pageUserId,userInThePageId)
         const query = `
             SELECT
             json_build_object(
-                'user_id', u.id,
-                'user_name', u.user_name,
-                'photo', u.photo,
-                'user_posts', COALESCE(json_agg(
-                    json_build_object(
-                        'post_id', p.id,
-                        'link', p.link,
-                        'description', p.description,
-                        'hash_tags', p.hash_tags,
-                        'likes_count', COALESCE(l.likes_count, 0),
-                        'created_at', p.created_at,
-                        'first_liker_name', COALESCE(fl.user_name, ''),
-                        'second_liker_name', COALESCE(sl.user_name, ''),
-                        'default_liked', 
-                            CASE 
-                                WHEN EXISTS (
-                                    SELECT 1 FROM likes WHERE liked_post_id = p.id AND like_owner_id = $2
-                                ) THEN TRUE 
-                                ELSE FALSE 
-                            END
-                        )
-                    ), '[]'::json)
-                ) AS user_object
-            FROM users u
-            LEFT JOIN posts p ON u.id = p.owner_id
+            'user_id', users.id,
+            'user_name', users.user_name,
+            'photo', users.photo,
+            'user_posts', COALESCE(json_agg(
+                json_build_object(
+                    'repost_count', COALESCE(reposts.reposts_count, 0),
+                    'post_id', posts.id,
+                    'link', posts.link,
+                    'description', posts.description,
+                    'hash_tags', posts.hash_tags,
+                    'likes_count', COALESCE(likes.likes_count, 0),
+                    'created_at', posts.created_at,
+                    'first_liker_name', COALESCE(first_liker.user_name, ''),
+                    'second_liker_name', COALESCE(second_liker.user_name, ''),
+                    'default_liked', 
+                        CASE 
+                            WHEN EXISTS (
+                                SELECT 1 FROM likes WHERE liked_post_id = posts.id AND like_owner_id = $2
+                            ) THEN TRUE 
+                            ELSE FALSE 
+                        END
+                    )
+                ), '[]'::json)
+            ) AS user_object
+            FROM users
+            LEFT JOIN posts ON users.id = posts.owner_id
             LEFT JOIN (
-                SELECT p.id AS post_id, COUNT(l.id) AS likes_count
-                FROM posts p
-                LEFT JOIN likes l ON p.id = l.liked_post_id
-                GROUP BY p.id
-            ) l ON p.id = l.post_id
-            LEFT JOIN users fl ON fl.id = (
+                SELECT liked_post_id AS post_id, COUNT(id) AS likes_count
+                FROM likes
+                GROUP BY liked_post_id
+            ) likes ON posts.id = likes.post_id
+            LEFT JOIN (
+                SELECT references_post_id, COUNT(id) AS reposts_count
+                FROM reposts
+                GROUP BY references_post_id
+            ) reposts ON posts.id = reposts.references_post_id
+            LEFT JOIN users first_liker ON first_liker.id = (
                 SELECT like_owner_id FROM likes 
-                WHERE liked_post_id = p.id
+                WHERE liked_post_id = posts.id
                 ORDER BY created_at ASC
                 LIMIT 1
             )
-            LEFT JOIN users sl ON sl.id = (
+            LEFT JOIN users second_liker ON second_liker.id = (
                 SELECT like_owner_id FROM likes 
-                WHERE liked_post_id = p.id
+                WHERE liked_post_id = posts.id
                 ORDER BY created_at ASC
                 LIMIT 1 OFFSET 1
             )
-            WHERE u.id = $1
-            GROUP BY u.id, u.user_name, u.photo;
+            WHERE users.id = $1
+            GROUP BY users.id, users.user_name, users.photo;
         `;
 
         const user = await clientDB.query(query, [pageUserId,userInThePageId]);
@@ -170,3 +175,56 @@ export async function getFollowersFromUserDB(userId) {
       return [];
     }
   }
+
+  /**           SELECT
+            json_build_object(
+            'user_id', users.id,
+            'user_name', users.user_name,
+            'photo', users.photo,
+            'user_posts', COALESCE(json_agg(
+                json_build_object(
+                    'repost_count', COALESCE(reposts.reposts_count, 0),
+                    'post_id', posts.id,
+                    'link', posts.link,
+                    'description', posts.description,
+                    'hash_tags', posts.hash_tags,
+                    'likes_count', COALESCE(likes.likes_count, 0),
+                    'created_at', posts.created_at,
+                    'first_liker_name', COALESCE(first_liker.user_name, ''),
+                    'second_liker_name', COALESCE(second_liker.user_name, ''),
+                    'default_liked', 
+                        CASE 
+                            WHEN EXISTS (
+                                SELECT 1 FROM likes WHERE liked_post_id = posts.id AND like_owner_id = $2
+                            ) THEN TRUE 
+                            ELSE FALSE 
+                        END
+                    )
+                ), '[]'::json)
+            ) AS user_object
+            FROM users
+            LEFT JOIN posts ON users.id = posts.owner_id
+            LEFT JOIN (
+                SELECT liked_post_id AS post_id, COUNT(id) AS likes_count
+                FROM likes
+                GROUP BY liked_post_id
+            ) likes ON posts.id = likes.post_id
+            LEFT JOIN (
+                SELECT references_post_id, COUNT(id) AS reposts_count
+                FROM reposts
+                GROUP BY references_post_id
+            ) reposts ON posts.id = reposts.references_post_id
+            LEFT JOIN users first_liker ON first_liker.id = (
+                SELECT like_owner_id FROM likes 
+                WHERE liked_post_id = posts.id
+                ORDER BY created_at ASC
+                LIMIT 1
+            )
+            LEFT JOIN users second_liker ON second_liker.id = (
+                SELECT like_owner_id FROM likes 
+                WHERE liked_post_id = posts.id
+                ORDER BY created_at ASC
+                LIMIT 1 OFFSET 1
+            )
+            WHERE users.id = $1
+            GROUP BY users.id, users.user_name, users.photo; */
