@@ -176,12 +176,12 @@ export async function getFollowersFromUserDB(userId) {
       console.log(error.message);
       return [];
     }
-  }
+}
 
-  export async function getRepostsFromUser(userId,viewerId) {
+export async function getRepostsFromUser(userTargetId,viewerId) {
     try {
-      const query = `
-      SELECT
+        const query = `
+        SELECT
         reposts.id AS repost_id,
         reposts.created_at AS repost_created_at,
         posts.id AS id,
@@ -230,14 +230,14 @@ export async function getFollowersFromUserDB(userId) {
             GROUP BY references_post_id
         ) AS repost_counts ON posts.id = repost_counts.references_post_id
         WHERE
-            reposts.reposted_by_id = $1
+            posts.hash_tags = $1
         ORDER BY
             reposts.created_at DESC;
-      `;
-      const result = await clientDB.query(query, [userId,viewerId]);
-      return result.rows;
+        `;
+        const result = await clientDB.query(query, [userTargetId,viewerId]);
+        return result.rows;
     } catch (error) {
-      console.log(error.message);
-      return [];
+        console.log(error.message);
+        return [];
     }
-  }
+}
