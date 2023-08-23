@@ -14,21 +14,35 @@ export async function getTimelinePostsRefactored(req, res) {
   try {
     const userId= res.locals.user.id;
     const userIsFollowing = await getFollowersFromUser(userId)
-    const getPosts = await getPostsDBRefactored(res.locals.user.id);
-    console.log(getPosts.rows);
+
+    const page = req.query.page || 0;
+    const postsPerPage = 10; 
+    const offset = page * postsPerPage;
+
+    console.log("Debug: userId =", userId);
+    console.log("Debug: userIsFollowing =", userIsFollowing);
+    console.log("Debug: page =", page);
+    console.log("Debug: postsPerPage =", postsPerPage);
+    console.log("Debug: offset =", offset);
+
+    const getPosts = await getPostsDBRefactored(res.locals.user.id,offset);
+    console.log("Debug: getPosts =", getPosts.rows);
 
     if (getPosts.rows.length === 0) {
       if (!userIsFollowing) {
+        console.log("Debug: Sending 202");
         return res.sendStatus(202); 
       } else {
+        console.log("Debug: Sending 204");
         return res.sendStatus(204);
       }
     }
-
+    
+    console.log("Debug: Sending 200");
     res.status(200).send(getPosts.rows);
   } catch (err) {
     console.log(err);
-    return res.status(500)
+    return res.status(500).send(err)
   }
 }
 

@@ -25,7 +25,7 @@ export function getPostsDB() {
   );
 }
 
-export function getPostsDBRefactored(userId) {
+export function getPostsDBRefactored(userId,offset) {
   return clientDB.query(
     `SELECT 
         posts.*, 
@@ -74,8 +74,9 @@ export function getPostsDBRefactored(userId) {
         SELECT following FROM followers WHERE follower = $1 
         )
         ORDER BY posts.created_at DESC
+        LIMIT 10 OFFSET $2;
         `,
-    [userId]
+    [userId,offset]
   );
 }
 
