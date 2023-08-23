@@ -88,46 +88,49 @@ export async function getPostsById(id) {
 export async function getPostsByHashtagDBRefactored(hashtag, userId) {
   return clientDB.query(
     `
-    SELECT p.id, p.link, p.description, p.hash_tags, p.owner_id, p.created_at,
-        l.likes_count, u.user_name, u.photo AS user_photo, repost_counts.repost_count,
-    COALESCE(fl.user_name, '') AS first_liker_name,
-    COALESCE(sl.user_name, '') AS second_liker_name,
+    SELECT 
+    posts.id, posts.link, posts.description, posts.hash_tags, posts.owner_id, posts.created_at,
+    likes_count.likes_count, users.user_name, users.photo AS user_photo, repost_counts.repost_count,
+    COALESCE(first_liker.user_name, '') AS first_liker_name,
+    COALESCE(second_liker.user_name, '') AS second_liker_name,
     CASE
         WHEN EXISTS (
-            SELECT 1 FROM likes WHERE liked_post_id = p.id AND like_owner_id = $2
+            SELECT 1 FROM likes WHERE liked_post_id = posts.id AND like_owner_id = $2
         ) THEN TRUE 
         ELSE FALSE 
     END AS default_liked
-    FROM posts p
-    LEFT JOIN (
-        SELECT posts.id AS post_id, COUNT(l.id) AS likes_count
-        FROM posts 
-        LEFT JOIN likes l ON posts.id = l.liked_post_id
-        GROUP BY posts.id
-    ) AS l ON p.id = l.post_id
-    LEFT JOIN (
-      SELECT 
-          references_post_id AS post_id, 
-          COUNT(id) AS repost_count
-      FROM reposts
-      GROUP BY references_post_id
-  ) AS repost_counts ON p.id = repost_counts.post_id
-    LEFT JOIN users u ON p.owner_id = u.id
-    LEFT JOIN users fl ON fl.id = (
-        SELECT like_owner_id FROM likes 
-        WHERE liked_post_id = p.id
-        ORDER BY created_at ASC
-        LIMIT 1
-    )
-    LEFT JOIN users sl ON sl.id = (
-        SELECT like_owner_id FROM likes 
-        WHERE liked_post_id = p.id
-        ORDER BY created_at ASC
-        LIMIT 1 OFFSET 1
-    )
-    WHERE p.hash_tags LIKE $1
-    ORDER BY p.created_at DESC
-    LIMIT 20;
+FROM posts
+LEFT JOIN (
+    SELECT 
+        posts.id AS post_id, COUNT(likes.id) AS likes_count
+    FROM posts 
+    LEFT JOIN likes ON posts.id = likes.liked_post_id
+    GROUP BY posts.id
+) AS likes_count ON posts.id = likes_count.post_id
+LEFT JOIN (
+    SELECT 
+        references_post_id AS post_id, 
+        COUNT(id) AS repost_count
+    FROM reposts
+    GROUP BY references_post_id
+) AS repost_counts ON posts.id = repost_counts.post_id
+LEFT JOIN users ON posts.owner_id = users.id
+LEFT JOIN users AS first_liker ON first_liker.id = (
+    SELECT like_owner_id FROM likes 
+    WHERE liked_post_id = posts.id
+    ORDER BY created_at ASC
+    LIMIT 1
+)
+LEFT JOIN users AS second_liker ON second_liker.id = (
+    SELECT like_owner_id FROM likes 
+    WHERE liked_post_id = posts.id
+    ORDER BY created_at ASC
+    LIMIT 1 OFFSET 1
+)
+WHERE posts.hash_tags LIKE $1
+ORDER BY posts.created_at DESC
+LIMIT 20;
+
     `,
     [`%${hashtag.trim()}%`, userId]
   );
