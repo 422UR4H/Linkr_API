@@ -176,7 +176,7 @@ export async function getFollowersFromUserDB(userId) {
     return [];
   }
 }
-export async function getRepostsFromUser(userId,viewerId) {
+export async function getRepostsFromUser(userId,viewerId,offset) {
   try {
     const query = `
     SELECT
@@ -230,9 +230,11 @@ export async function getRepostsFromUser(userId,viewerId) {
       WHERE
           reposts.reposted_by_id = $1
       ORDER BY
-          reposts.created_at DESC;
+          reposts.created_at DESC
+      OFFSET $3 LIMIT 10;
     `;
-    const result = await clientDB.query(query, [userId,viewerId]);
+    const result = await clientDB.query(query, [userId,viewerId,offset ? Number(offset) : 0]);
+    
     return result.rows;
   } catch (error) {
     console.log(error.message);
