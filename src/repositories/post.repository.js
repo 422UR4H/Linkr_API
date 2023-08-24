@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { clientDB } from "../database/db.connection.js";
 
 export async function addPost(owner_id, post) {
@@ -215,3 +216,15 @@ export async function repostDB(postId, userId) {
     [userId, postId]
   );
 }
+
+export async function getNewPosts(userId) {
+  return clientDB.query(
+    `SELECT * FROM posts
+      WHERE owner_id IN (
+        SELECT following FROM followers WHERE follower = $1 
+      )
+      ORDER BY created_at DESC;`,
+    [userId]
+  );
+}
+

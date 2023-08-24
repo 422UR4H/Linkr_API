@@ -3,6 +3,7 @@ import { editPostSchema, postSchema, repostSchema } from "../schemas/post.schema
 import validateAuth from "../middlewares/validateAuth.js";
 import validateSchema from "../middlewares/validateSchema.js";
 import {
+  checkNewPosts,
   getPostsByHashtagRefactored,
   getTimelinePostsRefactored,
   publishPost,
@@ -20,6 +21,6 @@ postRouter.put("/posts/:id", validateAuth, validateSchema(editPostSchema), updat
 postRouter.delete("/posts/:id", validateAuth, removePost);
 postRouter.delete("/reposts/:id", validateAuth, removeRepost);
 postRouter.post("/repost", validateAuth, validateSchema(repostSchema), repost);
-
+postRouter.get("/get-new-posts", validateAuth, checkNewPosts)
 
 export default postRouter;
