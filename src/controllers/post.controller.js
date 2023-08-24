@@ -1,3 +1,4 @@
+
 import { sortPostsByDate } from "../Utils/orderPostsData.js";
 import {
   addPost,
@@ -20,42 +21,32 @@ export async function getTimelinePostsRefactored(req, res) {
   try {
     const userId = res.locals.user.id;
     const userIsFollowing = await getFollowersFromUser(userId);
-
     const postsPerPage = 10;
-    const offset = page * postsPerPage;
-    console.log("Debug: offset =", offset);
-
-    console.log("Debug: userId =", userId);
-    console.log("Debug: userIsFollowing =", userIsFollowing);
-    console.log("Debug: page =", page);
-    console.log("Debug: postsPerPage =", postsPerPage);
-    console.log("Debug: offset =", offset);
-
-    const getPosts = (await getPostsDBRefactored(res.locals.user.id, offset))
-      .rows;
     const getReposts = await getRepostsFromUser(
       res.locals.user.id,
-      res.locals.user.id
+      res.locals.user.id,
+      0
     );
-    const slicedReposts = getReposts.slice(offset, getReposts.length);
+
+    const getPosts = (await getPostsDBRefactored(res.locals.user.id, 0))
+      .rows;
+    
     const allPostsAndRepostsFromUserTimeline = sortPostsByDate([
       ...getPosts,
-      ...slicedReposts,
+      ...getReposts,
     ]); //Ordenar por data de criação
-
-    const responseFinal = allPostsAndRepostsFromUserTimeline.slice(0, 10);
-
-    if (getPosts.length === 0) {
+    const currentPage =  page ? Number(page) : 1;
+    const start =( currentPage-1) * postsPerPage;
+    const end = postsPerPage * currentPage;
+    const responseFinal = allPostsAndRepostsFromUserTimeline.slice(start,end);
+    if (responseFinal.length === 0) {
       if (!userIsFollowing) {
-        console.log("Debug: Sending 202");
         return res.sendStatus(202);
       } else {
-        console.log("Debug: Sending 204");
         return res.sendStatus(204);
       }
     }
 
-    console.log("Debug: Sending 200");
     res.status(200).send(responseFinal);
   } catch (err) {
     console.log(err);
