@@ -1,5 +1,6 @@
 import {
     addFollower,
+    checkFollower,
     getAllInfoFromUserIdRefactored,
     getFollowersFromUserDB,
     getRepostsFromUser,
@@ -65,6 +66,22 @@ export async function getFollowersFromUser(userId) {
     try {
         await removeFollower(follower.id, following.id);
         return res.sendStatus(201);        
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+  }
+
+  export async function checkFollow(req,res) {
+    const follower = res.locals.user;
+    const following = req.params;
+
+    try {
+        const followers = await checkFollower(follower.id, following.id);
+        if(followers.length > 0) {
+            res.send(true);
+        } else {
+            res.send(false);
+        } 
     } catch (error) {
         res.status(500).send(error.message);
     }

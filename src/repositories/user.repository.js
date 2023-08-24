@@ -179,66 +179,60 @@ export async function getFollowersFromUserDB(userId) {
 export async function getRepostsFromUser(userId,viewerId,offset) {
   try {
     const query = `
-    SELECT
-      reposts.id AS repost_id,
-      reposts.reposted_by_id AS reposted_by_id,
-      reposts.created_at AS repost_created_at,
-      posts.id AS id,
-      posts.link AS link,
-      posts.description AS description,
-      posts.hash_tags AS hash_tags,
-      original_post_owner.id AS owner_id,  -- Alterei para a coluna de ID do usuário original
-      posts.created_at AS created_at,
-      original_post_owner.photo AS user_photo,
-      COALESCE(repost_counts.repost_count, 0) AS repost_count,
-      COALESCE(likes_counts.likes_count, 0) AS likes_count,
-      original_post_owner.user_name AS user_name,  -- Alterei para o nome do usuário original
-      first_liker.user_name AS first_liker_name,
-      second_liker.user_name AS second_liker_name,
-      true AS is_repost,
-      CASE WHEN EXISTS (SELECT 1 FROM likes WHERE liked_post_id = posts.id AND like_owner_id = $2) THEN true ELSE false END AS default_liked
-FROM
-      reposts
-INNER JOIN posts ON reposts.references_post_id = posts.id
-LEFT JOIN users ON reposts.reposted_by_id = users.id
-LEFT JOIN posts AS original_posts ON reposts.references_post_id = original_posts.id
-LEFT JOIN users AS original_post_owner ON original_posts.owner_id = original_post_owner.id
-LEFT JOIN (
-      SELECT liked_post_id, COUNT(*) AS likes_count
-      FROM likes
-      GROUP BY liked_post_id
-) AS likes_counts ON posts.id = likes_counts.liked_post_id
-LEFT JOIN (
-      SELECT
-          likes.liked_post_id,
-          users.user_name,
-          ROW_NUMBER() OVER (PARTITION BY likes.liked_post_id ORDER BY likes.liked_at) AS row_num
-      FROM likes
-      JOIN users ON likes.like_owner_id = users.id
-) AS first_liker ON posts.id = first_liker.liked_post_id AND first_liker.row_num = 1
-LEFT JOIN (
-      SELECT
-          likes.liked_post_id,
-          users.user_name,
-          ROW_NUMBER() OVER (PARTITION BY likes.liked_post_id ORDER BY likes.liked_at) AS row_num
-      FROM likes
-      JOIN users ON likes.like_owner_id = users.id
-) AS second_liker ON posts.id = second_liker.liked_post_id AND second_liker.row_num = 2
-LEFT JOIN (
-      SELECT references_post_id, COUNT(*) AS repost_count
-      FROM reposts
-      GROUP BY references_post_id
-) AS repost_counts ON posts.id = repost_counts.references_post_id
-WHERE
-      reposts.reposted_by_id = $1
-ORDER BY
-      reposts.created_at DESC
-OFFSET $3 LIMIT 10;
-
-
+        SELECT
+        reposts.id AS repost_id,
+        reposts.created_at AS repost_created_at,
+        posts.id AS id,
+        posts.link AS link,
+        posts.description AS description,
+        posts.hash_tags AS hash_tags,
+        posts.owner_id AS owner_id,
+        posts.created_at AS created_at,
+        reposts.reposted_by_id,
+        COALESCE(repost_counts.repost_count, 0) AS repost_count,
+        COALESCE(likes_counts.likes_count, 0) AS likes_count,
+        users.user_name AS user_name,
+        users.photo AS user_photo,
+        first_liker.user_name AS first_liker_name,
+        second_liker.user_name AS second_liker_name,
+        true AS is_repost,
+        CASE WHEN EXISTS (SELECT 1 FROM likes WHERE liked_post_id = posts.id AND like_owner_id = $2) THEN true ELSE false END AS default_liked
+        FROM
+            reposts
+        INNER JOIN posts ON reposts.references_post_id = posts.id
+        LEFT JOIN users ON reposts.reposted_by_id = users.id
+        LEFT JOIN (
+            SELECT liked_post_id, COUNT(*) AS likes_count
+            FROM likes
+            GROUP BY liked_post_id
+        ) AS likes_counts ON posts.id = likes_counts.liked_post_id
+        LEFT JOIN (
+            SELECT
+                likes.liked_post_id,
+                users.user_name,
+                ROW_NUMBER() OVER (PARTITION BY likes.liked_post_id ORDER BY likes.liked_at) AS row_num
+            FROM likes
+            JOIN users ON likes.like_owner_id = users.id
+        ) AS first_liker ON posts.id = first_liker.liked_post_id AND first_liker.row_num = 1
+        LEFT JOIN (
+            SELECT
+                likes.liked_post_id,
+                users.user_name,
+                ROW_NUMBER() OVER (PARTITION BY likes.liked_post_id ORDER BY likes.liked_at) AS row_num
+            FROM likes
+            JOIN users ON likes.like_owner_id = users.id
+        ) AS second_liker ON posts.id = second_liker.liked_post_id AND second_liker.row_num = 2
+        LEFT JOIN (
+            SELECT references_post_id, COUNT(*) AS repost_count
+            FROM reposts
+            GROUP BY references_post_id
+        ) AS repost_counts ON posts.id = repost_counts.references_post_id
+        WHERE
+            posts.hash_tags = $1
+        ORDER BY
+            reposts.created_at DESC;
     `;
-    const result = await clientDB.query(query, [userId,viewerId,offset ? Number(offset) : 0]);
-    
+    const result = await clientDB.query(query, [userId, viewerId]);
     return result.rows;
   } catch (error) {
     console.log(error.message);
@@ -259,4 +253,11 @@ export async function removeFollower(follower, following) {
     `DELETE FROM followers WHERE follower = $1 AND following = $2`,
     [follower, following]
   );
+}
+
+export async function checkFollower(follower, following) {
+  const followers =  await clientDB.query(`
+  SELECT * FROM followers WHERE follower = $1 AND following = $2`,
+  [follower, following]);
+  return followers.rows;
 }
