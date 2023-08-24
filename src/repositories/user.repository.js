@@ -261,3 +261,10 @@ export async function removeFollower(follower, following) {
     [follower, following]
   );
 }
+
+export async function checkFollower(follower, following) {
+  const followers =  await clientDB.query(`
+  SELECT * FROM followers WHERE follower = $1 AND following = $2`,
+  [follower, following]);
+  return followers.rows;
+}
