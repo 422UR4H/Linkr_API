@@ -1,10 +1,11 @@
-
+import dayjs from "dayjs";
 import { sortPostsByDate } from "../Utils/orderPostsData.js";
 import {
   addPost,
   deletePost,
   deleteRepost,
   editPost,
+  getNewPosts,
   getPostsByHashtagDBRefactored,
   getPostsById,
   getPostsDBRefactored,
@@ -28,17 +29,16 @@ export async function getTimelinePostsRefactored(req, res) {
       0
     );
 
-    const getPosts = (await getPostsDBRefactored(res.locals.user.id, 0))
-      .rows;
-    
+    const getPosts = (await getPostsDBRefactored(res.locals.user.id, 0)).rows;
+
     const allPostsAndRepostsFromUserTimeline = sortPostsByDate([
       ...getPosts,
       ...getReposts,
     ]); //Ordenar por data de criação
-    const currentPage =  page ? Number(page) : 1;
-    const start =( currentPage-1) * postsPerPage;
+    const currentPage = page ? Number(page) : 1;
+    const start = (currentPage - 1) * postsPerPage;
     const end = postsPerPage * currentPage;
-    const responseFinal = allPostsAndRepostsFromUserTimeline.slice(start,end);
+    const responseFinal = allPostsAndRepostsFromUserTimeline.slice(start, end);
     if (responseFinal.length === 0) {
       if (!userIsFollowing) {
         return res.sendStatus(202);
@@ -143,5 +143,18 @@ export async function repost(req, res) {
   } catch (error) {
     console.log(error.message);
     return res.status(500).send(error.message);
+  }
+}
+
+export async function checkNewPosts(req, res) {
+  const userId = res.locals.user.id;
+
+  try {
+    const newPosts = await getNewPosts(userId);
+
+    res.status(200).send(newPosts);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send(err.data);
   }
 }
