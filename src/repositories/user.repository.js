@@ -38,10 +38,7 @@ export function getUsersCountDB() {
   return clientDB.query(`SELECT COUNT(id) AS "usersAmount" FROM users`);
 }
 
-export async function getAllInfoFromUserIdRefactored(
-  pageUserId,
-  userInThePageId
-) {
+export async function getAllInfoFromUserIdRefactored(pageUserId,userInThePageId) {
   try {
     const query = `
             SELECT
@@ -101,14 +98,10 @@ export async function getAllInfoFromUserIdRefactored(
         `;
 
     const user = await clientDB.query(query, [pageUserId, userInThePageId]);
-    if (
-      user.rows[0].user_object.user_posts.length == 1 &&
-      user.rows[0].user_object.user_posts[0].post_id == null
-    ) {
+    if (user.rows[0].user_object.user_posts.length == 1 &&user.rows[0].user_object.user_posts[0].post_id == null) {
       user.rows[0].user_object.user_posts = [];
     }
-    user.rows[0].user_object.user_posts =
-      user.rows[0].user_object.user_posts.slice(0, 19);
+    user.rows[0].user_object.user_posts = user.rows[0].user_object.user_posts.slice(0, 19);
     return user.rows[0].user_object;
   } catch (error) {
     console.log(error.message);
@@ -183,7 +176,7 @@ export async function getFollowersFromUserDB(userId) {
     return [];
   }
 }
-export async function getRepostsFromUser(userId, viewerId) {
+export async function getRepostsFromUser(userId,viewerId,offset) {
   try {
     const query = `
         SELECT
@@ -238,7 +231,7 @@ export async function getRepostsFromUser(userId, viewerId) {
             posts.hash_tags = $1
         ORDER BY
             reposts.created_at DESC;
-        `;
+    `;
     const result = await clientDB.query(query, [userId, viewerId]);
     return result.rows;
   } catch (error) {

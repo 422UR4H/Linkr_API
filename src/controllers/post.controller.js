@@ -1,50 +1,56 @@
+import dayjs from "dayjs";
+import { sortPostsByDate } from "../Utils/orderPostsData.js";
 import {
   addPost,
   deletePost,
   deleteRepost,
   editPost,
+  getNewPosts,
   getPostsByHashtagDBRefactored,
   getPostsById,
   getPostsDBRefactored,
   getRepostsById,
   getRepostsWithHashtag,
-  repostDB
+  repostDB,
 } from "../repositories/post.repository.js";
+import { getRepostsFromUser } from "../repositories/user.repository.js";
 import { getFollowersFromUser } from "./users.controller.js";
 
 export async function getTimelinePostsRefactored(req, res) {
+  const page = parseInt(req.query.page, 10) || 0;
+
   try {
-    const userId= res.locals.user.id;
-    const userIsFollowing = await getFollowersFromUser(userId)
+    const userId = res.locals.user.id;
+    const userIsFollowing = await getFollowersFromUser(userId);
+    const postsPerPage = 10;
+    const getReposts = await getRepostsFromUser(
+      res.locals.user.id,
+      res.locals.user.id,
+      0
+    );
 
-    const page = req.query.page || 0;
-    const postsPerPage = 10; 
-    const offset = page * postsPerPage;
+    const getPosts = (await getPostsDBRefactored(res.locals.user.id, 0)).rows;
 
-    console.log("Debug: userId =", userId);
-    console.log("Debug: userIsFollowing =", userIsFollowing);
-    console.log("Debug: page =", page);
-    console.log("Debug: postsPerPage =", postsPerPage);
-    console.log("Debug: offset =", offset);
-
-    const getPosts = await getPostsDBRefactored(res.locals.user.id,offset);
-    console.log("Debug: getPosts =", getPosts.rows);
-
-    if (getPosts.rows.length === 0) {
+    const allPostsAndRepostsFromUserTimeline = sortPostsByDate([
+      ...getPosts,
+      ...getReposts,
+    ]); //Ordenar por data de criação
+    const currentPage = page ? Number(page) : 1;
+    const start = (currentPage - 1) * postsPerPage;
+    const end = postsPerPage * currentPage;
+    const responseFinal = allPostsAndRepostsFromUserTimeline.slice(start, end);
+    if (responseFinal.length === 0) {
       if (!userIsFollowing) {
-        console.log("Debug: Sending 202");
-        return res.sendStatus(202); 
+        return res.sendStatus(202);
       } else {
-        console.log("Debug: Sending 204");
         return res.sendStatus(204);
       }
     }
-    
-    console.log("Debug: Sending 200");
-    res.status(200).send(getPosts.rows);
+
+    res.status(200).send(responseFinal);
   } catch (err) {
     console.log(err);
-    return res.status(500).send(err)
+    return res.status(500).send(err);
   }
 }
 
@@ -111,30 +117,44 @@ export async function removeRepost(req, res) {
   }
 }
 
-
 export async function getPostsByHashtagRefactored(req, res) {
-  const {hashtag} = req.params;
+  const { hashtag } = req.params;
 
   try {
-      const postsFilteredByHashtag = (await getPostsByHashtagDBRefactored(hashtag,res.locals.user.id)).rows;
-      const repostsFilteredByHastag = (await getRepostsWithHashtag(hashtag,res.locals.user.id)).rows;
-      const response = [...postsFilteredByHashtag,...repostsFilteredByHastag];
-      return res.send(response);
-      
+    const postsFilteredByHashtag = (
+      await getPostsByHashtagDBRefactored(hashtag, res.locals.user.id)
+    ).rows;
+    const repostsFilteredByHastag = (
+      await getRepostsWithHashtag(hashtag, res.locals.user.id)
+    ).rows;
+    const response = [...postsFilteredByHashtag, ...repostsFilteredByHastag];
+    return res.send(response);
   } catch (error) {
-      console.log(error.message)
-      return res.sendStatus(500)
+    console.log(error.message);
+    return res.sendStatus(500);
   }
 }
 
 export async function repost(req, res) {
-  const {postId} = req.body;
+  const { postId } = req.body;
   try {
-      await repostDB(postId,res.locals.user.id);
-      return res.sendStatus(201);
+    await repostDB(postId, res.locals.user.id);
+    return res.sendStatus(201);
   } catch (error) {
-      console.log(error.message)
-      return res.status(500).send(error.message);
+    console.log(error.message);
+    return res.status(500).send(error.message);
   }
 }
 
+export async function checkNewPosts(req, res) {
+  const userId = res.locals.user.id;
+
+  try {
+    const newPosts = await getNewPosts(userId);
+
+    res.status(200).send(newPosts);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send(err.data);
+  }
+}
