@@ -239,7 +239,7 @@ export async function getRepostsFromUser(userId, viewerId) {
         ORDER BY
             reposts.created_at DESC;
         `;
-    const result = await clientDB.query(query, [userTargetId, viewerId]);
+    const result = await clientDB.query(query, [userId, viewerId]);
     return result.rows;
   } catch (error) {
     console.log(error.message);
