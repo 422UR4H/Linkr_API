@@ -9,6 +9,7 @@ import {
   getPostsByHashtagDBRefactored,
   getPostsById,
   getPostsDBRefactored,
+  getPostsFromPPLIFollow,
   getRepostsById,
   getRepostsWithHashtag,
   repostDB,
@@ -29,11 +30,14 @@ export async function getTimelinePostsRefactored(req, res) {
       0
     );
 
+    const getRepostsFollowing = (await getPostsFromPPLIFollow(res.locals.user.id)).rows;
+
     const getPosts = (await getPostsDBRefactored(res.locals.user.id, 0)).rows;
 
     const allPostsAndRepostsFromUserTimeline = sortPostsByDate([
       ...getPosts,
       ...getReposts,
+      ...getRepostsFollowing
     ]); //Ordenar por data de criação
     const currentPage = page ? Number(page) : 1;
     const start = (currentPage - 1) * postsPerPage;
