@@ -18,64 +18,71 @@ export function getPostsHashtags() {
 export function getPostsDBRefactored(userId, offset) {
   return clientDB.query(
     `SELECT DISTINCT
-    posts.*, 
-    like_counts.likes_count, 
-    repost_counts.repost_count,
-    users.user_name AS user_name, 
-    users.photo AS user_photo,
-    false as is_repost,
-    CASE 
-        WHEN EXISTS (
-            SELECT 1 FROM likes WHERE liked_post_id = posts.id AND like_owner_id = $1
-        ) THEN TRUE 
-        ELSE FALSE 
-    END AS default_liked,
-    COALESCE(first_liker.user_name, '') AS first_liker_name,
-    COALESCE(second_liker.user_name, '') AS second_liker_name,
-    COALESCE(
-        (
-            SELECT array_agg(jsonb_build_object('comment', comment, 'created_at', created_at, 'writer_id', writer_id, 'writer_name', users.user_name, 'writer_photo', users.photo))
-            FROM comments
-            JOIN users ON comments.writer_id = users.id
-            WHERE post_id = posts.id
-        ),
-        '{}'
-    ) AS comments
-FROM posts
-JOIN followers ON posts.owner_id = followers.following
-LEFT JOIN (
-    SELECT 
-        posts.id AS post_id, 
-        COUNT(likes.id) AS likes_count
-    FROM posts 
-    LEFT JOIN likes ON posts.id = likes.liked_post_id
-    GROUP BY posts.id
-) AS like_counts ON posts.id = like_counts.post_id
-LEFT JOIN (
-  SELECT 
-      references_post_id AS post_id, 
-      COUNT(id) AS repost_count
-  FROM reposts
-  GROUP BY references_post_id
-) AS repost_counts ON posts.id = repost_counts.post_id
-LEFT JOIN users ON posts.owner_id = users.id
-LEFT JOIN users first_liker ON first_liker.id = (
-    SELECT like_owner_id FROM likes 
-    WHERE liked_post_id = posts.id
-    LIMIT 1
-)
-LEFT JOIN users second_liker ON second_liker.id = (
-    SELECT like_owner_id FROM likes 
-    WHERE liked_post_id = posts.id
-    LIMIT 1 OFFSET 1
-)
-WHERE posts.owner_id = $1 
-OR posts.owner_id IN (
-SELECT following FROM followers WHERE follower = $1 
-)
-ORDER BY posts.created_at DESC
-OFFSET $2;
-        `,
+      posts.*, 
+      like_counts.likes_count, 
+      repost_counts.repost_count,
+      comments_count.comments_count,
+      users.user_name AS user_name, 
+      users.photo AS user_photo,
+      false as is_repost,
+      CASE 
+          WHEN EXISTS (
+              SELECT 1 FROM likes WHERE liked_post_id = posts.id AND like_owner_id = $1
+          ) THEN TRUE 
+          ELSE FALSE 
+      END AS default_liked,
+      COALESCE(first_liker.user_name, '') AS first_liker_name,
+      COALESCE(second_liker.user_name, '') AS second_liker_name,
+      COALESCE(
+          (
+              SELECT array_agg(jsonb_build_object('comment', comment, 'created_at', created_at, 'writer_id', writer_id, 'writer_name', users.user_name, 'writer_photo', users.photo))
+              FROM comments
+              JOIN users ON comments.writer_id = users.id
+              WHERE post_id = posts.id
+          ),
+          '{}'
+      ) AS comments
+    FROM posts
+    JOIN followers ON posts.owner_id = followers.following
+    LEFT JOIN (
+        SELECT 
+            posts.id AS post_id, 
+            COUNT(likes.id) AS likes_count
+        FROM posts 
+        LEFT JOIN likes ON posts.id = likes.liked_post_id
+        GROUP BY posts.id
+    ) AS like_counts ON posts.id = like_counts.post_id
+    LEFT JOIN (
+      SELECT 
+          references_post_id AS post_id, 
+          COUNT(id) AS repost_count
+      FROM reposts
+      GROUP BY references_post_id
+    ) AS repost_counts ON posts.id = repost_counts.post_id
+    LEFT JOIN (
+      SELECT 
+          post_id,
+          COUNT(id) AS comments_count
+      FROM comments
+      GROUP BY post_id
+    ) AS comments_count ON posts.id = comments_count.post_id
+    LEFT JOIN users ON posts.owner_id = users.id
+    LEFT JOIN users first_liker ON first_liker.id = (
+        SELECT like_owner_id FROM likes 
+        WHERE liked_post_id = posts.id
+        LIMIT 1
+    )
+    LEFT JOIN users second_liker ON second_liker.id = (
+        SELECT like_owner_id FROM likes 
+        WHERE liked_post_id = posts.id
+        LIMIT 1 OFFSET 1
+    )
+    WHERE posts.owner_id = $1 
+      OR posts.owner_id IN (
+        SELECT following FROM followers WHERE follower = $1 
+      )
+    ORDER BY posts.created_at DESC
+    OFFSET $2;`,
     [userId, offset]
   );
 }
