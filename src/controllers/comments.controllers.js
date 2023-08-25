@@ -16,8 +16,9 @@ export async function createComment(req, res) {
 
 export async function getCommentsByPost(req, res) {
     const { post_id } = req.params;
+    const { id } = res.locals.user;
     try {
-        const result = await getCommentsByPostDB(post_id);
+        const result = await getCommentsByPostDB(post_id, id);
         res.send(result.rows);
     } catch (err) {
         res.status(500).send(err.message);
