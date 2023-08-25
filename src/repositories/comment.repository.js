@@ -18,14 +18,15 @@ export function getCommentsByPostDB(post_id, user_id) {
         // JOIN users AS u ON c.writer_id = u.id
         // WHERE c.post_id = $1`,
         `SELECT c.*, u.user_name, u.photo,
-            CASE
-                WHEN f.following IS NOT NULL THEN TRUE
-                ELSE FALSE
-            END AS is_follower
-        FROM comments AS c
-        JOIN users AS u ON c.writer_id = u.id
-        LEFT JOIN followers AS f ON c.writer_id = f.follower AND f.following = $2
-        WHERE c.post_id = $1`,
+        CASE
+            WHEN f.following IS NOT NULL THEN TRUE
+            ELSE FALSE
+        END AS is_follower
+    FROM comments AS c
+    JOIN users AS u ON c.writer_id = u.id
+    LEFT JOIN followers AS f ON f.follower = $2 AND f.following = c.writer_id
+    WHERE c.post_id = $1
+    `,
         [post_id, user_id]
     );
 }
