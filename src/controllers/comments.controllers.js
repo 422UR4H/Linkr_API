@@ -1,4 +1,4 @@
-import { createCommentDB, getCommentsByPostDB } from "../repositories/comment.repository.js";
+import { createCommentDB, getCommentsByPostDB, getCommentsCountsDB } from "../repositories/comment.repository.js";
 
 
 export async function createComment(req, res) {
@@ -19,6 +19,15 @@ export async function getCommentsByPost(req, res) {
     const { id } = res.locals.user;
     try {
         const result = await getCommentsByPostDB(post_id, id);
+        res.send(result.rows);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+}
+
+export async function getCommentsCounts(req, res) {
+    try {
+        const result = await getCommentsCountsDB();
         res.send(result.rows);
     } catch (err) {
         res.status(500).send(err.message);
