@@ -57,21 +57,27 @@ export async function getAllInfoFromUserIdRefactored(beingLookedId,whoIsLookingI
                 'description', posts.description,
                 'hash_tags', posts.hash_tags,
                 'likes_count', COALESCE(likes.likes_count, 0),
+                'comment_count', COALESCE(comments.comment_count, 0),
                 'created_at', posts.created_at,
                 'first_liker_name', COALESCE(first_liker.user_name, ''),
                 'second_liker_name', COALESCE(second_liker.user_name, ''),
-                'default_liked', 
-                    CASE 
+                'default_liked',
+                    CASE
                         WHEN EXISTS (
                             SELECT 1 FROM likes WHERE liked_post_id = posts.id AND like_owner_id = $2
-                        ) THEN TRUE 
-                        ELSE FALSE 
+                        ) THEN TRUE
+                        ELSE FALSE
                     END
             )
         ), '[]'::json)
     ) AS user_object
 FROM users
 LEFT JOIN posts ON users.id = posts.owner_id
+LEFT JOIN (
+    SELECT post_id, COUNT(id) AS comment_count
+    FROM comments
+    GROUP BY post_id
+) comments ON posts.id = comments.post_id
 LEFT JOIN (
     SELECT liked_post_id AS post_id, COUNT(id) AS likes_count
     FROM likes
@@ -96,6 +102,7 @@ LEFT JOIN users second_liker ON second_liker.id = (
 )
 WHERE users.id = $1
 GROUP BY users.id, users.user_name, users.photo;
+
 
         `;
 
@@ -181,58 +188,65 @@ export async function getFollowersFromUserDB(userId) {
 export async function getRepostsFromUser(userId,viewerId,offset) {
   try {
     const query = `
-        SELECT
-        reposts.id AS repost_id,
-        reposts.created_at AS repost_created_at,
-        posts.id AS id,
-        posts.link AS link,
-        posts.description AS description,
-        posts.hash_tags AS hash_tags,
-        posts.owner_id AS owner_id,
-        posts.created_at AS created_at,
-        reposts.reposted_by_id,
-        COALESCE(repost_counts.repost_count, 0) AS repost_count,
-        COALESCE(likes_counts.likes_count, 0) AS likes_count,
-        users.user_name AS user_name,
-        users.photo AS user_photo,
-        first_liker.user_name AS first_liker_name,
-        second_liker.user_name AS second_liker_name,
-        true AS is_repost,
-        CASE WHEN EXISTS (SELECT 1 FROM likes WHERE liked_post_id = posts.id AND like_owner_id = $2) THEN true ELSE false END AS default_liked
-        FROM
-            reposts
-        INNER JOIN posts ON reposts.references_post_id = posts.id
-        LEFT JOIN users ON reposts.reposted_by_id = users.id
-        LEFT JOIN (
-            SELECT liked_post_id, COUNT(*) AS likes_count
-            FROM likes
-            GROUP BY liked_post_id
-        ) AS likes_counts ON posts.id = likes_counts.liked_post_id
-        LEFT JOIN (
-            SELECT
-                likes.liked_post_id,
-                users.user_name,
-                ROW_NUMBER() OVER (PARTITION BY likes.liked_post_id ORDER BY likes.liked_at) AS row_num
-            FROM likes
-            JOIN users ON likes.like_owner_id = users.id
-        ) AS first_liker ON posts.id = first_liker.liked_post_id AND first_liker.row_num = 1
-        LEFT JOIN (
-            SELECT
-                likes.liked_post_id,
-                users.user_name,
-                ROW_NUMBER() OVER (PARTITION BY likes.liked_post_id ORDER BY likes.liked_at) AS row_num
-            FROM likes
-            JOIN users ON likes.like_owner_id = users.id
-        ) AS second_liker ON posts.id = second_liker.liked_post_id AND second_liker.row_num = 2
-        LEFT JOIN (
-            SELECT references_post_id, COUNT(*) AS repost_count
-            FROM reposts
-            GROUP BY references_post_id
-        ) AS repost_counts ON posts.id = repost_counts.references_post_id
-        WHERE
-            posts.owner_id = $1
-        ORDER BY
-            reposts.created_at DESC;
+    SELECT
+    reposts.id AS repost_id,
+    reposts.created_at AS repost_created_at,
+    posts.id AS id,
+    posts.link AS link,
+    posts.description AS description,
+    posts.hash_tags AS hash_tags,
+    posts.owner_id AS owner_id,
+    posts.created_at AS created_at,
+    reposts.reposted_by_id,
+    COALESCE(repost_counts.repost_count, 0) AS repost_count,
+    COALESCE(likes_counts.likes_count, 0) AS likes_count,
+    COALESCE(comments_counts.comment_count, 0) AS comment_count,
+    users.user_name AS user_name,
+    users.photo AS user_photo,
+    first_liker.user_name AS first_liker_name,
+    second_liker.user_name AS second_liker_name,
+    true AS is_repost,
+    CASE WHEN EXISTS (SELECT 1 FROM likes WHERE liked_post_id = posts.id AND like_owner_id = $2) THEN true ELSE false END AS default_liked
+FROM
+    reposts
+INNER JOIN posts ON reposts.references_post_id = posts.id
+LEFT JOIN users ON reposts.reposted_by_id = users.id
+LEFT JOIN (
+    SELECT post_id, COUNT(*) AS comment_count
+    FROM comments
+    GROUP BY post_id
+) comments_counts ON posts.id = comments_counts.post_id
+LEFT JOIN (
+    SELECT liked_post_id, COUNT(*) AS likes_count
+    FROM likes
+    GROUP BY liked_post_id
+) likes_counts ON posts.id = likes_counts.liked_post_id
+LEFT JOIN (
+    SELECT
+        likes.liked_post_id,
+        users.user_name,
+        ROW_NUMBER() OVER (PARTITION BY likes.liked_post_id ORDER BY likes.liked_at) AS row_num
+    FROM likes
+    JOIN users ON likes.like_owner_id = users.id
+) first_liker ON posts.id = first_liker.liked_post_id AND first_liker.row_num = 1
+LEFT JOIN (
+    SELECT
+        likes.liked_post_id,
+        users.user_name,
+        ROW_NUMBER() OVER (PARTITION BY likes.liked_post_id ORDER BY likes.liked_at) AS row_num
+    FROM likes
+    JOIN users ON likes.like_owner_id = users.id
+) second_liker ON posts.id = second_liker.liked_post_id AND second_liker.row_num = 2
+LEFT JOIN (
+    SELECT references_post_id, COUNT(*) AS repost_count
+    FROM reposts
+    GROUP BY references_post_id
+) repost_counts ON posts.id = repost_counts.references_post_id
+WHERE
+    posts.owner_id = $1
+ORDER BY
+    reposts.created_at DESC;
+
     `;
     const result = await clientDB.query(query, [userId, viewerId]);
     return result.rows;
